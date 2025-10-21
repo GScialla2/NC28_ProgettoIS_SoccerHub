@@ -4,10 +4,6 @@ import java.sql.*;
 import java.util.ArrayList;
 
 public class TournamentDAO {
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/soccerhub";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "password";
-
     /**
      * Retrieves all tournaments from the database
      * @return List of all tournaments
@@ -15,7 +11,7 @@ public class TournamentDAO {
     public static ArrayList<Tournament> doRetriveAll() {
         ArrayList<Tournament> tournaments = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT * FROM tournaments")) {
 
@@ -27,6 +23,12 @@ public class TournamentDAO {
                 tournament.setTrophy(rs.getString("trophy"));
                 tournament.setTeamCount(rs.getInt("team_count"));
                 tournament.setMatchCount(rs.getInt("match_count"));
+                tournament.setStartDate(rs.getDate("start_date"));
+                tournament.setEndDate(rs.getDate("end_date"));
+                tournament.setLocation(rs.getString("location"));
+                tournament.setDescription(rs.getString("description"));
+                tournament.setCategory(rs.getString("category"));
+                tournament.setStatus(rs.getString("status"));
 
                 tournaments.add(tournament);
             }
@@ -45,7 +47,7 @@ public class TournamentDAO {
     public static Tournament doRetriveById(int id) {
         Tournament tournament = null;
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT * FROM tournaments WHERE id = ?")) {
 
             stmt.setInt(1, id);
@@ -59,6 +61,12 @@ public class TournamentDAO {
                     tournament.setTrophy(rs.getString("trophy"));
                     tournament.setTeamCount(rs.getInt("team_count"));
                     tournament.setMatchCount(rs.getInt("match_count"));
+                    tournament.setStartDate(rs.getDate("start_date"));
+                    tournament.setEndDate(rs.getDate("end_date"));
+                    tournament.setLocation(rs.getString("location"));
+                    tournament.setDescription(rs.getString("description"));
+                    tournament.setCategory(rs.getString("category"));
+                    tournament.setStatus(rs.getString("status"));
                 }
             }
         } catch (SQLException e) {
@@ -76,7 +84,7 @@ public class TournamentDAO {
     public static ArrayList<Tournament> doRetriveByType(String type) {
         ArrayList<Tournament> tournaments = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT * FROM tournaments WHERE type = ?")) {
 
             stmt.setString(1, type);
@@ -90,6 +98,12 @@ public class TournamentDAO {
                     tournament.setTrophy(rs.getString("trophy"));
                     tournament.setTeamCount(rs.getInt("team_count"));
                     tournament.setMatchCount(rs.getInt("match_count"));
+                    tournament.setStartDate(rs.getDate("start_date"));
+                    tournament.setEndDate(rs.getDate("end_date"));
+                    tournament.setLocation(rs.getString("location"));
+                    tournament.setDescription(rs.getString("description"));
+                    tournament.setCategory(rs.getString("category"));
+                    tournament.setStatus(rs.getString("status"));
 
                     tournaments.add(tournament);
                 }
@@ -107,9 +121,9 @@ public class TournamentDAO {
      * @return true if successful, false otherwise
      */
     public static boolean doSave(Tournament tournament) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "INSERT INTO tournaments (name, type, trophy, team_count, match_count) VALUES (?, ?, ?, ?, ?)",
+                     "INSERT INTO tournaments (name, type, trophy, team_count, match_count, start_date, end_date, location, description, category, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                      Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, tournament.getName());
@@ -117,6 +131,12 @@ public class TournamentDAO {
             stmt.setString(3, tournament.getTrophy());
             stmt.setInt(4, tournament.getTeamCount());
             stmt.setInt(5, tournament.getMatchCount());
+            stmt.setDate(6, new java.sql.Date(tournament.getStartDate().getTime()));
+            stmt.setDate(7, new java.sql.Date(tournament.getEndDate().getTime()));
+            stmt.setString(8, tournament.getLocation());
+            stmt.setString(9, tournament.getDescription());
+            stmt.setString(10, tournament.getCategory());
+            stmt.setString(11, tournament.getStatus());
 
             int affectedRows = stmt.executeUpdate();
 
@@ -141,16 +161,22 @@ public class TournamentDAO {
      * @return true if successful, false otherwise
      */
     public static boolean doUpdate(Tournament tournament) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "UPDATE tournaments SET name = ?, type = ?, trophy = ?, team_count = ?, match_count = ? WHERE id = ?")) {
+                     "UPDATE tournaments SET name = ?, type = ?, trophy = ?, team_count = ?, match_count = ?, start_date = ?, end_date = ?, location = ?, description = ?, category = ?, status = ? WHERE id = ?")) {
 
             stmt.setString(1, tournament.getName());
             stmt.setString(2, tournament.getType());
             stmt.setString(3, tournament.getTrophy());
             stmt.setInt(4, tournament.getTeamCount());
             stmt.setInt(5, tournament.getMatchCount());
-            stmt.setInt(6, tournament.getId());
+            stmt.setDate(6, new java.sql.Date(tournament.getStartDate().getTime()));
+            stmt.setDate(7, new java.sql.Date(tournament.getEndDate().getTime()));
+            stmt.setString(8, tournament.getLocation());
+            stmt.setString(9, tournament.getDescription());
+            stmt.setString(10, tournament.getCategory());
+            stmt.setString(11, tournament.getStatus());
+            stmt.setInt(12, tournament.getId());
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -166,7 +192,7 @@ public class TournamentDAO {
      * @return true if successful, false otherwise
      */
     public static boolean doDelete(int id) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("DELETE FROM tournaments WHERE id = ?")) {
 
             stmt.setInt(1, id);

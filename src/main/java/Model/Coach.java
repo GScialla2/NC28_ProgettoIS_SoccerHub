@@ -5,6 +5,9 @@ public class Coach extends User
     private String city;
     private String phone;
     private String careerDescription;
+    private String licenseNumber;
+    private int experienceYears;
+    private String specialization;
 
     public String getCity()
     {
@@ -20,6 +23,21 @@ public class Coach extends User
     {
         return careerDescription;
     }
+    
+    public String getLicenseNumber()
+    {
+        return licenseNumber;
+    }
+    
+    public int getExperienceYears()
+    {
+        return experienceYears;
+    }
+    
+    public String getSpecialization()
+    {
+        return specialization;
+    }
 
     public void setCity(String city)
     {
@@ -34,5 +52,20 @@ public class Coach extends User
     public void setCareerDescription(String careerDescription)
     {
         this.careerDescription = careerDescription;
+    }
+    
+    public void setLicenseNumber(String licenseNumber)
+    {
+        this.licenseNumber = licenseNumber;
+    }
+    
+    public void setExperienceYears(int experienceYears)
+    {
+        this.experienceYears = experienceYears;
+    }
+    
+    public void setSpecialization(String specialization)
+    {
+        this.specialization = specialization;
     }
 }

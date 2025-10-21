@@ -116,33 +116,20 @@ public class UserDAO
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    // Get the user with the salt
+                    // Create a temporary user to hash the password
                     User tempUser = new User();
-                    tempUser.setPassword(rs.getString("password"));
-                    tempUser.setSalt(rs.getString("salt"));
+                    tempUser.setPassword(password);
                     
-                    // Verify the password
-                    if (tempUser.verifyPassword(password)) {
-                        int userId = rs.getInt("id");
-                        String userType = rs.getString("user_type");
-                        
-                        // Create the appropriate user type based on the user_type field
-                        if ("coach".equals(userType)) {
-                            user = getCoachById(userId);
-                        } else if ("player".equals(userType)) {
-                            user = getPlayerById(userId);
-                        } else if ("fan".equals(userType)) {
-                            user = getFanById(userId);
-                        } else {
-                            // Default user type
-                            user = new User();
-                            user.setId(userId);
-                            user.setName(rs.getString("name"));
-                            user.setSurname(rs.getString("surname"));
-                            user.setEmail(rs.getString("email"));
-                            user.setBirthDate(rs.getDate("birth_date"));
-                            user.setNationality(rs.getString("nationality"));
-                        }
+                    // Compare the hashed password with the one in the database
+                    if (tempUser.getPassword().equals(rs.getString("password"))) {
+                        user = new User();
+                        user.setId(rs.getInt("id"));
+                        user.setName(rs.getString("name"));
+                        user.setSurname(rs.getString("surname"));
+                        user.setEmail(rs.getString("email"));
+                        // We don't set the password directly as it's already hashed in the database
+                        user.setBirthDate(rs.getDate("birth_date"));
+                        user.setNationality(rs.getString("nationality"));
                     }
                 }
             }
@@ -151,117 +138,6 @@ public class UserDAO
         }
 
         return user;
-    }
-    
-    /**
-     * Retrieves a coach by ID
-     * @param id The coach ID
-     * @return The coach object or null if not found
-     */
-    private static Coach getCoachById(int id) {
-        Coach coach = null;
-        
-        try (Connection conn = ConnectionManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     "SELECT u.*, c.license_number, c.experience_years, c.specialization " +
-                     "FROM users u JOIN coach c ON u.id = c.id " +
-                     "WHERE u.id = ?")) {
-            
-            stmt.setInt(1, id);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    coach = new Coach();
-                    coach.setId(rs.getInt("id"));
-                    coach.setName(rs.getString("name"));
-                    coach.setSurname(rs.getString("surname"));
-                    coach.setEmail(rs.getString("email"));
-                    coach.setBirthDate(rs.getDate("birth_date"));
-                    coach.setNationality(rs.getString("nationality"));
-                    coach.setLicenseNumber(rs.getString("license_number"));
-                    coach.setExperienceYears(rs.getInt("experience_years"));
-                    coach.setSpecialization(rs.getString("specialization"));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return coach;
-    }
-    
-    /**
-     * Retrieves a player by ID
-     * @param id The player ID
-     * @return The player object or null if not found
-     */
-    private static Player getPlayerById(int id) {
-        Player player = null;
-        
-        try (Connection conn = ConnectionManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     "SELECT u.*, p.position, p.height, p.weight, p.preferred_foot " +
-                     "FROM users u JOIN player p ON u.id = p.id " +
-                     "WHERE u.id = ?")) {
-            
-            stmt.setInt(1, id);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    player = new Player();
-                    player.setId(rs.getInt("id"));
-                    player.setName(rs.getString("name"));
-                    player.setSurname(rs.getString("surname"));
-                    player.setEmail(rs.getString("email"));
-                    player.setBirthDate(rs.getDate("birth_date"));
-                    player.setNationality(rs.getString("nationality"));
-                    player.setPosition(rs.getString("position"));
-                    player.setHeight(rs.getDouble("height"));
-                    player.setWeight(rs.getDouble("weight"));
-                    player.setPreferredFoot(rs.getString("preferred_foot"));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return player;
-    }
-    
-    /**
-     * Retrieves a fan by ID
-     * @param id The fan ID
-     * @return The fan object or null if not found
-     */
-    private static Fan getFanById(int id) {
-        Fan fan = null;
-        
-        try (Connection conn = ConnectionManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     "SELECT u.*, f.favorite_team, f.membership_level " +
-                     "FROM users u JOIN fan f ON u.id = f.id " +
-                     "WHERE u.id = ?")) {
-            
-            stmt.setInt(1, id);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    fan = new Fan();
-                    fan.setId(rs.getInt("id"));
-                    fan.setName(rs.getString("name"));
-                    fan.setSurname(rs.getString("surname"));
-                    fan.setEmail(rs.getString("email"));
-                    fan.setBirthDate(rs.getDate("birth_date"));
-                    fan.setNationality(rs.getString("nationality"));
-                    fan.setFavoriteTeam(rs.getString("favorite_team"));
-                    fan.setMembershipLevel(rs.getString("membership_level"));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return fan;
     }
 
     /**
@@ -272,27 +148,15 @@ public class UserDAO
     public static boolean doSave(User user) {
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "INSERT INTO users (name, surname, email, password, salt, birth_date, nationality, user_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                     "INSERT INTO users (name, surname, email, password, birth_date, nationality) VALUES (?, ?, ?, ?, ?, ?)",
                      Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, user.getName());
             stmt.setString(2, user.getSurname());
             stmt.setString(3, user.getEmail());
             stmt.setString(4, user.getPassword());
-            stmt.setString(5, user.getSalt());
-            stmt.setDate(6, new java.sql.Date(user.getBirthDate().getTime()));
-            stmt.setString(7, user.getNationality());
-            
-            // Determine user type
-            String userType = "user";
-            if (user instanceof Coach) {
-                userType = "coach";
-            } else if (user instanceof Player) {
-                userType = "player";
-            } else if (user instanceof Fan) {
-                userType = "fan";
-            }
-            stmt.setString(8, userType);
+            stmt.setDate(5, new java.sql.Date(user.getBirthDate().getTime()));
+            stmt.setString(6, user.getNationality());
 
             int affectedRows = stmt.executeUpdate();
 

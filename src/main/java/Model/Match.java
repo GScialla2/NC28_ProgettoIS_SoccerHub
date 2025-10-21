@@ -5,20 +5,35 @@ import java.util.Date;
 public class Match
 {
     private int id;
-    private String opponent;
+    private int tournamentId;
+    private String homeTeam;
+    private String awayTeam;
     private Date matchDate;
-    private String matchTime;
+    private String location;
+    private String category;
     private String type;
-    private String stadium;
+    private String status;
+    private int homeScore;
+    private int awayScore;
 
     public int getId()
     {
         return id;
     }
 
-    public String getOpponent()
+    public int getTournamentId()
     {
-        return opponent;
+        return tournamentId;
+    }
+
+    public String getHomeTeam()
+    {
+        return homeTeam;
+    }
+
+    public String getAwayTeam()
+    {
+        return awayTeam;
     }
 
     public Date getMatchDate()
@@ -26,9 +41,14 @@ public class Match
         return matchDate;
     }
 
-    public String getMatchTime()
+    public String getLocation()
     {
-        return matchTime;
+        return location;
+    }
+
+    public String getCategory()
+    {
+        return category;
     }
 
     public String getType()
@@ -36,9 +56,19 @@ public class Match
         return type;
     }
 
-    public String getStadium()
+    public String getStatus()
     {
-        return stadium;
+        return status;
+    }
+
+    public int getHomeScore()
+    {
+        return homeScore;
+    }
+
+    public int getAwayScore()
+    {
+        return awayScore;
     }
 
     public void setId(int id)
@@ -46,9 +76,19 @@ public class Match
         this.id = id;
     }
 
-    public void setOpponent(String opponent)
+    public void setTournamentId(int tournamentId)
     {
-        this.opponent = opponent;
+        this.tournamentId = tournamentId;
+    }
+
+    public void setHomeTeam(String homeTeam)
+    {
+        this.homeTeam = homeTeam;
+    }
+
+    public void setAwayTeam(String awayTeam)
+    {
+        this.awayTeam = awayTeam;
     }
 
     public void setMatchDate(Date matchDate)
@@ -56,9 +96,14 @@ public class Match
         this.matchDate = matchDate;
     }
 
-    public void setMatchTime(String matchTime)
+    public void setLocation(String location)
     {
-        this.matchTime = matchTime;
+        this.location = location;
+    }
+
+    public void setCategory(String category)
+    {
+        this.category = category;
     }
 
     public void setType(String type)
@@ -66,8 +111,18 @@ public class Match
         this.type = type;
     }
 
-    public void setStadium(String stadium)
+    public void setStatus(String status)
     {
-        this.stadium = stadium;
+        this.status = status;
+    }
+
+    public void setHomeScore(int homeScore)
+    {
+        this.homeScore = homeScore;
+    }
+
+    public void setAwayScore(int awayScore)
+    {
+        this.awayScore = awayScore;
     }
 }

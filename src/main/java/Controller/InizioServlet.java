@@ -2,19 +2,18 @@ package Controller;
 
 
 import Model.*;
-import jakarta.servlet.RequestDispatcher;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-@WebServlet("/InizioServlet")
 public class InizioServlet extends HttpServlet
 {
     public void doGet(HttpServletRequest request , HttpServletResponse response) throws ServletException, IOException {
@@ -41,17 +40,30 @@ public class InizioServlet extends HttpServlet
             RequestDispatcher dispatcher = request.getRequestDispatcher("WEB-INF/results/Login.jsp");
             dispatcher.forward(request,response);
         }
+        else if(richiesta.equals("register"))
+        {
+            String userType = request.getParameter("type");
+            if (userType != null) {
+                response.sendRedirect(request.getContextPath() + "/Registrazione?type=" + userType);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/Registrazione");
+            }
+        }
         else if(richiesta.equals("matches"))
         {
             ArrayList<Match> matches = new ArrayList<Match>();
             String tipo = request.getParameter("tipo");
-            if( tipo == null)
-            {
-                matches = MatchDAO.doRetriveByCategoria(richiesta);
-            }
-            else
-            {
-                matches = MatchDAO.doRetriveByCategoriaTipo(richiesta,tipo);
+            String categoria = request.getParameter("categoria");
+            
+            if (categoria == null) {
+                // If no category specified, get all matches
+                matches = MatchDAO.doRetriveAll();
+            } else if (tipo == null) {
+                // If only category specified
+                matches = MatchDAO.doRetriveByCategoria(categoria);
+            } else {
+                // If both category and type specified
+                matches = MatchDAO.doRetriveByCategoriaTipo(categoria, tipo);
             }
             request.setAttribute("matches",matches);
             String dispatchPath = "/WEB-INF/results/Matches.jsp";

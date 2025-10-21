@@ -4,6 +4,8 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Date;
 
 public class User
@@ -13,6 +15,7 @@ public class User
     private String surname;
     private String email;
     private String password;
+    private String salt;
     private Date birthDate;
     private String nationality;
 
@@ -39,6 +42,11 @@ public class User
     public String getPassword()
     {
         return password;
+    }
+    
+    public String getSalt()
+    {
+        return salt;
     }
 
     public Date getBirthDate()
@@ -75,10 +83,46 @@ public class User
     {
         try
         {
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            // Generate a random salt
+            SecureRandom random = new SecureRandom();
+            byte[] saltBytes = new byte[16];
+            random.nextBytes(saltBytes);
+            this.salt = Base64.getEncoder().encodeToString(saltBytes);
+            
+            // Use SHA-256 with salt for password hashing
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.reset();
+            digest.update(saltBytes);
             digest.update(password.getBytes(StandardCharsets.UTF_8));
-            this.password = String.format("%040x",new BigInteger(1,digest.digest()));
+            this.password = Base64.getEncoder().encodeToString(digest.digest());
+        }
+        catch(NoSuchAlgorithmException e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    /**
+     * Verifies if the provided password matches the stored password
+     * @param inputPassword The password to verify
+     * @return true if the password matches, false otherwise
+     */
+    public boolean verifyPassword(String inputPassword)
+    {
+        try
+        {
+            // Decode the stored salt
+            byte[] saltBytes = Base64.getDecoder().decode(this.salt);
+            
+            // Hash the input password with the same salt
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.reset();
+            digest.update(saltBytes);
+            digest.update(inputPassword.getBytes(StandardCharsets.UTF_8));
+            String hashedInput = Base64.getEncoder().encodeToString(digest.digest());
+            
+            // Compare the hashed input with the stored password
+            return this.password.equals(hashedInput);
         }
         catch(NoSuchAlgorithmException e)
         {
@@ -94,6 +138,15 @@ public class User
     public void setNationality(String nationality)
     {
         this.nationality = nationality;
+    }
+    
+    /**
+     * Sets the salt for password hashing
+     * @param salt The salt value
+     */
+    public void setSalt(String salt)
+    {
+        this.salt = salt;
     }
 }
 

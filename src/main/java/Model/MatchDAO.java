@@ -6,10 +6,6 @@ import java.util.Date;
 import java.util.List;
 
 public class MatchDAO {
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/soccerhub";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "password";
-
     /**
      * Retrieves all matches from the database
      * @return List of all matches
@@ -17,18 +13,23 @@ public class MatchDAO {
     public static ArrayList<Match> doRetriveAll() {
         ArrayList<Match> matches = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT * FROM matches")) {
 
             while (rs.next()) {
                 Match match = new Match();
                 match.setId(rs.getInt("id"));
-                match.setOpponent(rs.getString("opponent"));
+                match.setTournamentId(rs.getInt("tournament_id"));
+                match.setHomeTeam(rs.getString("home_team"));
+                match.setAwayTeam(rs.getString("away_team"));
                 match.setMatchDate(rs.getDate("match_date"));
-                match.setMatchTime(rs.getString("match_time"));
+                match.setLocation(rs.getString("location"));
+                match.setCategory(rs.getString("category"));
                 match.setType(rs.getString("type"));
-                match.setStadium(rs.getString("stadium"));
+                match.setStatus(rs.getString("status"));
+                match.setHomeScore(rs.getInt("home_score"));
+                match.setAwayScore(rs.getInt("away_score"));
 
                 matches.add(match);
             }
@@ -47,7 +48,7 @@ public class MatchDAO {
     public static Match doRetriveById(int id) {
         Match match = null;
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT * FROM matches WHERE id = ?")) {
 
             stmt.setInt(1, id);
@@ -56,11 +57,16 @@ public class MatchDAO {
                 if (rs.next()) {
                     match = new Match();
                     match.setId(rs.getInt("id"));
-                    match.setOpponent(rs.getString("opponent"));
+                    match.setTournamentId(rs.getInt("tournament_id"));
+                    match.setHomeTeam(rs.getString("home_team"));
+                    match.setAwayTeam(rs.getString("away_team"));
                     match.setMatchDate(rs.getDate("match_date"));
-                    match.setMatchTime(rs.getString("match_time"));
+                    match.setLocation(rs.getString("location"));
+                    match.setCategory(rs.getString("category"));
                     match.setType(rs.getString("type"));
-                    match.setStadium(rs.getString("stadium"));
+                    match.setStatus(rs.getString("status"));
+                    match.setHomeScore(rs.getInt("home_score"));
+                    match.setAwayScore(rs.getInt("away_score"));
                 }
             }
         } catch (SQLException e) {
@@ -78,7 +84,7 @@ public class MatchDAO {
     public static ArrayList<Match> doRetriveByType(String type) {
         ArrayList<Match> matches = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT * FROM matches WHERE type = ?")) {
 
             stmt.setString(1, type);
@@ -87,11 +93,16 @@ public class MatchDAO {
                 while (rs.next()) {
                     Match match = new Match();
                     match.setId(rs.getInt("id"));
-                    match.setOpponent(rs.getString("opponent"));
+                    match.setTournamentId(rs.getInt("tournament_id"));
+                    match.setHomeTeam(rs.getString("home_team"));
+                    match.setAwayTeam(rs.getString("away_team"));
                     match.setMatchDate(rs.getDate("match_date"));
-                    match.setMatchTime(rs.getString("match_time"));
+                    match.setLocation(rs.getString("location"));
+                    match.setCategory(rs.getString("category"));
                     match.setType(rs.getString("type"));
-                    match.setStadium(rs.getString("stadium"));
+                    match.setStatus(rs.getString("status"));
+                    match.setHomeScore(rs.getInt("home_score"));
+                    match.setAwayScore(rs.getInt("away_score"));
 
                     matches.add(match);
                 }
@@ -111,7 +122,7 @@ public class MatchDAO {
     public static ArrayList<Match> doRetriveByCategoria(String category) {
         ArrayList<Match> matches = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT * FROM matches WHERE category = ?")) {
 
             stmt.setString(1, category);
@@ -120,11 +131,16 @@ public class MatchDAO {
                 while (rs.next()) {
                     Match match = new Match();
                     match.setId(rs.getInt("id"));
-                    match.setOpponent(rs.getString("opponent"));
+                    match.setTournamentId(rs.getInt("tournament_id"));
+                    match.setHomeTeam(rs.getString("home_team"));
+                    match.setAwayTeam(rs.getString("away_team"));
                     match.setMatchDate(rs.getDate("match_date"));
-                    match.setMatchTime(rs.getString("match_time"));
+                    match.setLocation(rs.getString("location"));
+                    match.setCategory(rs.getString("category"));
                     match.setType(rs.getString("type"));
-                    match.setStadium(rs.getString("stadium"));
+                    match.setStatus(rs.getString("status"));
+                    match.setHomeScore(rs.getInt("home_score"));
+                    match.setAwayScore(rs.getInt("away_score"));
 
                     matches.add(match);
                 }
@@ -137,7 +153,7 @@ public class MatchDAO {
     }
 
     /**
-     * Retrieves matches by type and category
+     * Retrieves matches by category and type
      * @param category The match category
      * @param type The match type
      * @return List of matches of the specified category and type
@@ -145,7 +161,7 @@ public class MatchDAO {
     public static ArrayList<Match> doRetriveByCategoriaTipo(String category, String type) {
         ArrayList<Match> matches = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT * FROM matches WHERE category = ? AND type = ?")) {
 
             stmt.setString(1, category);
@@ -155,11 +171,16 @@ public class MatchDAO {
                 while (rs.next()) {
                     Match match = new Match();
                     match.setId(rs.getInt("id"));
-                    match.setOpponent(rs.getString("opponent"));
+                    match.setTournamentId(rs.getInt("tournament_id"));
+                    match.setHomeTeam(rs.getString("home_team"));
+                    match.setAwayTeam(rs.getString("away_team"));
                     match.setMatchDate(rs.getDate("match_date"));
-                    match.setMatchTime(rs.getString("match_time"));
+                    match.setLocation(rs.getString("location"));
+                    match.setCategory(rs.getString("category"));
                     match.setType(rs.getString("type"));
-                    match.setStadium(rs.getString("stadium"));
+                    match.setStatus(rs.getString("status"));
+                    match.setHomeScore(rs.getInt("home_score"));
+                    match.setAwayScore(rs.getInt("away_score"));
 
                     matches.add(match);
                 }
@@ -177,16 +198,21 @@ public class MatchDAO {
      * @return true if successful, false otherwise
      */
     public static boolean doSave(Match match) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "INSERT INTO matches (opponent, match_date, match_time, type, stadium) VALUES (?, ?, ?, ?, ?)",
+                     "INSERT INTO matches (tournament_id, home_team, away_team, match_date, location, category, type, status, home_score, away_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                      Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setString(1, match.getOpponent());
-            stmt.setDate(2, new java.sql.Date(match.getMatchDate().getTime()));
-            stmt.setString(3, match.getMatchTime());
-            stmt.setString(4, match.getType());
-            stmt.setString(5, match.getStadium());
+            stmt.setInt(1, match.getTournamentId());
+            stmt.setString(2, match.getHomeTeam());
+            stmt.setString(3, match.getAwayTeam());
+            stmt.setDate(4, new java.sql.Date(match.getMatchDate().getTime()));
+            stmt.setString(5, match.getLocation());
+            stmt.setString(6, match.getCategory());
+            stmt.setString(7, match.getType());
+            stmt.setString(8, match.getStatus());
+            stmt.setInt(9, match.getHomeScore());
+            stmt.setInt(10, match.getAwayScore());
 
             int affectedRows = stmt.executeUpdate();
 
@@ -211,16 +237,21 @@ public class MatchDAO {
      * @return true if successful, false otherwise
      */
     public static boolean doUpdate(Match match) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "UPDATE matches SET opponent = ?, match_date = ?, match_time = ?, type = ?, stadium = ? WHERE id = ?")) {
+                     "UPDATE matches SET tournament_id = ?, home_team = ?, away_team = ?, match_date = ?, location = ?, category = ?, type = ?, status = ?, home_score = ?, away_score = ? WHERE id = ?")) {
 
-            stmt.setString(1, match.getOpponent());
-            stmt.setDate(2, new java.sql.Date(match.getMatchDate().getTime()));
-            stmt.setString(3, match.getMatchTime());
-            stmt.setString(4, match.getType());
-            stmt.setString(5, match.getStadium());
-            stmt.setInt(6, match.getId());
+            stmt.setInt(1, match.getTournamentId());
+            stmt.setString(2, match.getHomeTeam());
+            stmt.setString(3, match.getAwayTeam());
+            stmt.setDate(4, new java.sql.Date(match.getMatchDate().getTime()));
+            stmt.setString(5, match.getLocation());
+            stmt.setString(6, match.getCategory());
+            stmt.setString(7, match.getType());
+            stmt.setString(8, match.getStatus());
+            stmt.setInt(9, match.getHomeScore());
+            stmt.setInt(10, match.getAwayScore());
+            stmt.setInt(11, match.getId());
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -236,7 +267,7 @@ public class MatchDAO {
      * @return true if successful, false otherwise
      */
     public static boolean doDelete(int id) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("DELETE FROM matches WHERE id = ?")) {
 
             stmt.setInt(1, id);

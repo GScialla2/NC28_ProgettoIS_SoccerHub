@@ -8,6 +8,7 @@ public class Fan extends User
     private String street;
     private String favoriteTeam;
     private String phone;
+    private String membershipLevel;
 
     public String getBirthCity()
     {
@@ -38,6 +39,11 @@ public class Fan extends User
     {
         return phone;
     }
+    
+    public String getMembershipLevel()
+    {
+        return membershipLevel;
+    }
 
     public void setBirthCity(String birthCity)
     {
@@ -67,5 +73,10 @@ public class Fan extends User
     public void setPhone(String phone)
     {
         this.phone = phone;
+    }
+    
+    public void setMembershipLevel(String membershipLevel)
+    {
+        this.membershipLevel = membershipLevel;
     }
 }
