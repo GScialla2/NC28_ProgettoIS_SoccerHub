@@ -1,0 +1,249 @@
+package Model;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Date;
+
+public class UserDAO
+{
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/soccerhub";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "password";
+
+    /**
+     * Retrieves all users from the database
+     * @return List of all users
+     */
+    public static ArrayList<User> doRetriveAll() {
+        ArrayList<User> users = new ArrayList<>();
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM users")) {
+
+            while (rs.next()) {
+                User user = new User();
+                user.setId(rs.getInt("id"));
+                user.setName(rs.getString("name"));
+                user.setSurname(rs.getString("surname"));
+                user.setEmail(rs.getString("email"));
+                // We don't set the password directly as it's already hashed in the database
+                user.setBirthDate(rs.getDate("birth_date"));
+                user.setNationality(rs.getString("nationality"));
+
+                users.add(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return users;
+    }
+
+    /**
+     * Retrieves a user by ID
+     * @param id The user ID
+     * @return The user object or null if not found
+     */
+    public static User doRetriveById(int id) {
+        User user = null;
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE id = ?")) {
+
+            stmt.setInt(1, id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    user = new User();
+                    user.setId(rs.getInt("id"));
+                    user.setName(rs.getString("name"));
+                    user.setSurname(rs.getString("surname"));
+                    user.setEmail(rs.getString("email"));
+                    // We don't set the password directly as it's already hashed in the database
+                    user.setBirthDate(rs.getDate("birth_date"));
+                    user.setNationality(rs.getString("nationality"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return user;
+    }
+
+    /**
+     * Retrieves a user by email
+     * @param email The user email
+     * @return The user object or null if not found
+     */
+    public static User doRetriveByEmail(String email) {
+        User user = null;
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE email = ?")) {
+
+            stmt.setString(1, email);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    user = new User();
+                    user.setId(rs.getInt("id"));
+                    user.setName(rs.getString("name"));
+                    user.setSurname(rs.getString("surname"));
+                    user.setEmail(rs.getString("email"));
+                    // We don't set the password directly as it's already hashed in the database
+                    user.setBirthDate(rs.getDate("birth_date"));
+                    user.setNationality(rs.getString("nationality"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return user;
+    }
+
+    /**
+     * Authenticates a user with email and password
+     * @param email The user email
+     * @param password The user password (will be hashed before comparison)
+     * @return The user object if authentication is successful, null otherwise
+     */
+    public static User doAuthenticate(String email, String password) {
+        User user = null;
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE email = ?")) {
+
+            stmt.setString(1, email);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    // Create a temporary user to hash the password
+                    User tempUser = new User();
+                    tempUser.setPassword(password);
+
+                    // Compare the hashed password with the one in the database
+                    if (tempUser.getPassword().equals(rs.getString("password"))) {
+                        user = new User();
+                        user.setId(rs.getInt("id"));
+                        user.setName(rs.getString("name"));
+                        user.setSurname(rs.getString("surname"));
+                        user.setEmail(rs.getString("email"));
+                        user.setBirthDate(rs.getDate("birth_date"));
+                        user.setNationality(rs.getString("nationality"));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return user;
+    }
+
+    /**
+     * Inserts a new user into the database
+     * @param user The user to insert
+     * @return true if successful, false otherwise
+     */
+    public static boolean doSave(User user) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement(
+                     "INSERT INTO users (name, surname, email, password, birth_date, nationality) VALUES (?, ?, ?, ?, ?, ?)",
+                     Statement.RETURN_GENERATED_KEYS)) {
+
+            stmt.setString(1, user.getName());
+            stmt.setString(2, user.getSurname());
+            stmt.setString(3, user.getEmail());
+            stmt.setString(4, user.getPassword());
+            stmt.setDate(5, new java.sql.Date(user.getBirthDate().getTime()));
+            stmt.setString(6, user.getNationality());
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        user.setId(generatedKeys.getInt(1));
+                        return true;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Updates an existing user in the database
+     * @param user The user to update
+     * @return true if successful, false otherwise
+     */
+    public static boolean doUpdate(User user) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement(
+                     "UPDATE users SET name = ?, surname = ?, email = ?, birth_date = ?, nationality = ? WHERE id = ?")) {
+
+            stmt.setString(1, user.getName());
+            stmt.setString(2, user.getSurname());
+            stmt.setString(3, user.getEmail());
+            stmt.setDate(4, new java.sql.Date(user.getBirthDate().getTime()));
+            stmt.setString(5, user.getNationality());
+            stmt.setInt(6, user.getId());
+
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Updates a user's password
+     * @param userId The user ID
+     * @param newPassword The new password (will be hashed before storage)
+     * @return true if successful, false otherwise
+     */
+    public static boolean doUpdatePassword(int userId, String newPassword) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement("UPDATE users SET password = ? WHERE id = ?")) {
+
+            // Create a temporary user to hash the password
+            User tempUser = new User();
+            tempUser.setPassword(newPassword);
+
+            stmt.setString(1, tempUser.getPassword());
+            stmt.setInt(2, userId);
+
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Deletes a user from the database
+     * @param id The ID of the user to delete
+     * @return true if successful, false otherwise
+     */
+    public static boolean doDelete(int id) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement("DELETE FROM users WHERE id = ?")) {
+
+            stmt.setInt(1, id);
+
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+}
