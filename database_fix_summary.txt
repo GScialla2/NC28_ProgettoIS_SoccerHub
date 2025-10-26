@@ -1,0 +1,87 @@
+# SoccerHub Database Fix Summary
+
+## Issues Identified
+
+1. **Duplicate Entry Error**:
+   ```
+   java.sql.SQLIntegrityConstraintViolationException: Duplicate entry 'admin@soccerhub.com' for key 'users.email'
+   ```
+   This error occurred during database initialization when trying to insert sample data that already existed in the database.
+
+2. **Missing Table Error**:
+   ```
+   java.sql.SQLSyntaxErrorException: Table 'soccerhub.tournaments' doesn't exist
+   ```
+   This error occurred because the TournamentDAO was trying to access a table named "tournaments" (plural), but the schema defined it as "tournament" (singular).
+
+## Changes Made
+
+### 1. Fixed Duplicate Entry Error
+
+- Modified all INSERT statements to use INSERT IGNORE, which skips insertion if a duplicate key error would occur
+- Changed the way child table records are inserted to use SELECT queries based on email instead of LAST_INSERT_ID()
+- This ensures that even if the database initialization script runs multiple times, it won't try to insert duplicate data
+
+Before:
+```sql
+INSERT INTO users (name, surname, email, password, salt, birth_date, nationality, user_type) 
+VALUES ('Admin', 'User', 'admin@soccerhub.com', 'YWRtaW4xMjM=', 'c2FsdDEyMzQ1Njc4OTA=', '1990-01-01', 'Italian', 'user');
+```
+
+After:
+```sql
+INSERT IGNORE INTO users (name, surname, email, password, salt, birth_date, nationality, user_type) 
+VALUES ('Admin', 'User', 'admin@soccerhub.com', 'YWRtaW4xMjM=', 'c2FsdDEyMzQ1Njc4OTA=', '1990-01-01', 'Italian', 'user');
+```
+
+### 2. Fixed Missing Table Error
+
+- Renamed the table from "tournament" (singular) to "tournaments" (plural) to match what the DAO is expecting
+- Updated the foreign key reference in the matches table to point to the renamed table
+- Added missing columns to the tournaments table that are referenced in the TournamentDAO:
+  - type
+  - trophy
+  - team_count
+  - match_count
+
+Before:
+```sql
+CREATE TABLE IF NOT EXISTS tournament (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    location VARCHAR(100) NOT NULL,
+    description TEXT,
+    category VARCHAR(50) NOT NULL,
+    status ENUM('upcoming', 'ongoing', 'completed') NOT NULL
+);
+```
+
+After:
+```sql
+CREATE TABLE IF NOT EXISTS tournaments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    type VARCHAR(50),
+    trophy VARCHAR(100),
+    team_count INT,
+    match_count INT,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    location VARCHAR(100) NOT NULL,
+    description TEXT,
+    category VARCHAR(50) NOT NULL,
+    status ENUM('upcoming', 'ongoing', 'completed') NOT NULL
+);
+```
+
+## Expected Results
+
+With these changes:
+
+1. The duplicate entry error during database initialization should be resolved. The application will now skip inserting records that already exist rather than failing with an error.
+
+2. The "Table 'soccerhub.tournaments' doesn't exist" error should be resolved. The table name now matches what the TournamentDAO is expecting, and all required columns are present.
+
+The application should now be able to start up without errors and properly display tournaments on the home page.

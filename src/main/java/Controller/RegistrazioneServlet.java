@@ -29,12 +29,23 @@ public class RegistrazioneServlet extends HttpServlet
         Date birthDate = null;
         try
         {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-            birthDate = dateFormat.parse(request.getParameter("birthDate"));
+            // HTML5 date inputs submit dates as yyyy-MM-dd
+            String birthDateStr = request.getParameter("birthDate");
+            if (birthDateStr != null && !birthDateStr.isEmpty()) {
+                try {
+                    SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd");
+                    birthDate = isoFormat.parse(birthDateStr);
+                } catch (ParseException pe) {
+                    // Fallback to legacy format dd/MM/yyyy if needed
+                    SimpleDateFormat legacyFormat = new SimpleDateFormat("dd/MM/yyyy");
+                    birthDate = legacyFormat.parse(birthDateStr);
+                }
+            }
         }
         catch (ParseException e)
         {
-            e.printStackTrace();
+            // If parsing fails, handle gracefully later via validation
+            birthDate = null;
         }
 
         User existingUser = UserDAO.doRetriveByEmail(email);

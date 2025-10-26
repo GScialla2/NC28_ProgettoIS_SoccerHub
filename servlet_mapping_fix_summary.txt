@@ -1,0 +1,45 @@
+# SoccerHub Servlet Mapping Fix Summary
+
+## Issue
+The application was returning a 404 error when trying to access the InizioServlet. This was happening because there was a discrepancy between the servlet annotation and the web.xml mapping.
+
+## Root Causes
+1. **Conflicting URL Mappings**: The InizioServlet was annotated with `@WebServlet("/InizioServlet")` but mapped to `/inizio` in web.xml.
+2. **Inconsistent References**: Some parts of the code were referencing the servlet as "/InizioServlet" while others were using "/inizio".
+
+## Changes Made
+
+### 1. Updated InizioServlet Annotation
+Changed the annotation in InizioServlet.java from:
+```java
+@WebServlet("/InizioServlet")
+```
+
+To:
+```java
+@WebServlet("/inizio")
+```
+
+This ensures the annotation matches the mapping in web.xml.
+
+### 2. Updated References in LoginServlet
+Updated two redirects in LoginServlet.java that were using the old path:
+
+From:
+```java
+response.sendRedirect(request.getContextPath() + "/InizioServlet?action=login");
+```
+
+To:
+```java
+response.sendRedirect(request.getContextPath() + "/inizio?action=login");
+```
+
+## Verification
+- The build completed successfully after making these changes.
+- The servlet should now be accessible via the "/inizio" URL pattern, which is consistent with how it's referenced throughout the JSP files.
+
+## Additional Notes
+- When both web.xml and @WebServlet annotations are used, there can be conflicts if they specify different URL patterns.
+- It's generally better to use one or the other consistently, but if both are used, they must be kept in sync.
+- All JSP files in the project were already using the "/inizio" pattern, which indicates this was likely the intended URL pattern.

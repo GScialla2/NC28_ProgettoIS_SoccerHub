@@ -11,6 +11,12 @@
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
     
+    <!-- Global context params -->
+    <context-param>
+        <param-name>ADMIN_EXPORT_TOKEN</param-name>
+        <param-value>CHANGE_ME_SECURE_TOKEN</param-value>
+    </context-param>
+
     <!-- Servlet Definitions -->
     <servlet>
         <servlet-name>HomeServlet</servlet-name>
@@ -30,6 +36,31 @@
     <servlet>
         <servlet-name>RegistrazioneServlet</servlet-name>
         <servlet-class>Controller.RegistrazioneServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>AdminUsersExportServlet</servlet-name>
+        <servlet-class>Controller.AdminUsersExportServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>ProfileServlet</servlet-name>
+        <servlet-class>Controller.ProfileServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>EditProfileServlet</servlet-name>
+        <servlet-class>Controller.EditProfileServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>CreateMatchServlet</servlet-name>
+        <servlet-class>Controller.CreateMatchServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>CreateTournamentServlet</servlet-name>
+        <servlet-class>Controller.CreateTournamentServlet</servlet-class>
     </servlet>
     
     <!-- Servlet Mappings -->
@@ -51,6 +82,31 @@
     <servlet-mapping>
         <servlet-name>RegistrazioneServlet</servlet-name>
         <url-pattern>/registrazione</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>AdminUsersExportServlet</servlet-name>
+        <url-pattern>/admin/users</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>ProfileServlet</servlet-name>
+        <url-pattern>/profile</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>EditProfileServlet</servlet-name>
+        <url-pattern>/profile/edit</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>CreateMatchServlet</servlet-name>
+        <url-pattern>/matches/create</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>CreateTournamentServlet</servlet-name>
+        <url-pattern>/tournaments/create</url-pattern>
     </servlet-mapping>
     
     <!-- Listeners -->

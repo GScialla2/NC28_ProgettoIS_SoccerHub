@@ -45,7 +45,7 @@ public class UserValidator
             errors.put("surname", "Registrazione fallita:Il campo cognome non rispetta il formato corretto");
         }
 
-        if (!CITY_PATTERN.matcher(city).matches()) {
+        if (city != null && !CITY_PATTERN.matcher(city).matches()) {
             errors.put("city", "Registrazione fallita:Il campo città non rispetta il formato corretto");
         }
 
@@ -62,9 +62,9 @@ public class UserValidator
             errors.put("phone", "Registrazione fallita: Il numero di telefono non rispetta il formato corretto");
         }
 
-        if(birthDate != null && !DATEBIRTH_PATTERN.matcher(birthDate.toString()).matches() )
-        {
-            errors.put("birthDate", "Registrazione fallita: La data di nascita non rispetta il formato corretto");
+        // Validate birth date presence and parsing success
+        if (birthDate == null) {
+            errors.put("birthDate", "Registrazione fallita: La data di nascita non è valida");
         }
 
         if(cittaResidenza != null && !CITTA_RESIDENZA_PATTERN.matcher(cittaResidenza).matches() )

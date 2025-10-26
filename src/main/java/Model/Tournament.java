@@ -5,6 +5,7 @@ import java.util.Date;
 public class Tournament
 {
     private int id;
+    private Integer createdBy; // user id (coach) who created the tournament, nullable
     private String name;
     private String type;
     private String trophy;
@@ -20,6 +21,10 @@ public class Tournament
     public int getId()
     {
         return id;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
     }
 
     public String getName()
@@ -80,6 +85,10 @@ public class Tournament
     public void setId(int id)
     {
         this.id = id;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
     }
 
     public void setName(String name)

@@ -21,9 +21,12 @@ public class MatchDAO {
                 Match match = new Match();
                 match.setId(rs.getInt("id"));
                 match.setTournamentId(rs.getInt("tournament_id"));
+                int createdBy = rs.getInt("created_by");
+                match.setCreatedBy(rs.wasNull() ? null : createdBy);
                 match.setHomeTeam(rs.getString("home_team"));
                 match.setAwayTeam(rs.getString("away_team"));
-                match.setMatchDate(rs.getDate("match_date"));
+                Timestamp ts = rs.getTimestamp("match_date");
+                if (ts != null) match.setMatchDate(new Date(ts.getTime()));
                 match.setLocation(rs.getString("location"));
                 match.setCategory(rs.getString("category"));
                 match.setType(rs.getString("type"));
@@ -58,9 +61,12 @@ public class MatchDAO {
                     match = new Match();
                     match.setId(rs.getInt("id"));
                     match.setTournamentId(rs.getInt("tournament_id"));
+                    int createdBy = rs.getInt("created_by");
+                    match.setCreatedBy(rs.wasNull() ? null : createdBy);
                     match.setHomeTeam(rs.getString("home_team"));
                     match.setAwayTeam(rs.getString("away_team"));
-                    match.setMatchDate(rs.getDate("match_date"));
+                    Timestamp ts = rs.getTimestamp("match_date");
+                    if (ts != null) match.setMatchDate(new Date(ts.getTime()));
                     match.setLocation(rs.getString("location"));
                     match.setCategory(rs.getString("category"));
                     match.setType(rs.getString("type"));
@@ -94,9 +100,12 @@ public class MatchDAO {
                     Match match = new Match();
                     match.setId(rs.getInt("id"));
                     match.setTournamentId(rs.getInt("tournament_id"));
+                    int createdBy = rs.getInt("created_by");
+                    match.setCreatedBy(rs.wasNull() ? null : createdBy);
                     match.setHomeTeam(rs.getString("home_team"));
                     match.setAwayTeam(rs.getString("away_team"));
-                    match.setMatchDate(rs.getDate("match_date"));
+                    Timestamp ts = rs.getTimestamp("match_date");
+                    if (ts != null) match.setMatchDate(new Date(ts.getTime()));
                     match.setLocation(rs.getString("location"));
                     match.setCategory(rs.getString("category"));
                     match.setType(rs.getString("type"));
@@ -132,9 +141,12 @@ public class MatchDAO {
                     Match match = new Match();
                     match.setId(rs.getInt("id"));
                     match.setTournamentId(rs.getInt("tournament_id"));
+                    int createdBy = rs.getInt("created_by");
+                    match.setCreatedBy(rs.wasNull() ? null : createdBy);
                     match.setHomeTeam(rs.getString("home_team"));
                     match.setAwayTeam(rs.getString("away_team"));
-                    match.setMatchDate(rs.getDate("match_date"));
+                    Timestamp ts = rs.getTimestamp("match_date");
+                    if (ts != null) match.setMatchDate(new Date(ts.getTime()));
                     match.setLocation(rs.getString("location"));
                     match.setCategory(rs.getString("category"));
                     match.setType(rs.getString("type"));
@@ -172,9 +184,12 @@ public class MatchDAO {
                     Match match = new Match();
                     match.setId(rs.getInt("id"));
                     match.setTournamentId(rs.getInt("tournament_id"));
+                    int createdBy = rs.getInt("created_by");
+                    match.setCreatedBy(rs.wasNull() ? null : createdBy);
                     match.setHomeTeam(rs.getString("home_team"));
                     match.setAwayTeam(rs.getString("away_team"));
-                    match.setMatchDate(rs.getDate("match_date"));
+                    Timestamp ts = rs.getTimestamp("match_date");
+                    if (ts != null) match.setMatchDate(new Date(ts.getTime()));
                     match.setLocation(rs.getString("location"));
                     match.setCategory(rs.getString("category"));
                     match.setType(rs.getString("type"));
@@ -200,19 +215,28 @@ public class MatchDAO {
     public static boolean doSave(Match match) {
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "INSERT INTO matches (tournament_id, home_team, away_team, match_date, location, category, type, status, home_score, away_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                     "INSERT INTO matches (tournament_id, created_by, home_team, away_team, match_date, location, category, type, status, home_score, away_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                      Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setInt(1, match.getTournamentId());
-            stmt.setString(2, match.getHomeTeam());
-            stmt.setString(3, match.getAwayTeam());
-            stmt.setDate(4, new java.sql.Date(match.getMatchDate().getTime()));
-            stmt.setString(5, match.getLocation());
-            stmt.setString(6, match.getCategory());
-            stmt.setString(7, match.getType());
-            stmt.setString(8, match.getStatus());
-            stmt.setInt(9, match.getHomeScore());
-            stmt.setInt(10, match.getAwayScore());
+            if (match.getTournamentId() > 0) {
+                stmt.setInt(1, match.getTournamentId());
+            } else {
+                stmt.setNull(1, java.sql.Types.INTEGER);
+            }
+            if (match.getCreatedBy() != null) {
+                stmt.setInt(2, match.getCreatedBy());
+            } else {
+                stmt.setNull(2, java.sql.Types.INTEGER);
+            }
+            stmt.setString(3, match.getHomeTeam());
+            stmt.setString(4, match.getAwayTeam());
+            stmt.setTimestamp(5, new java.sql.Timestamp(match.getMatchDate().getTime()));
+            stmt.setString(6, match.getLocation());
+            stmt.setString(7, match.getCategory());
+            stmt.setString(8, match.getType());
+            stmt.setString(9, match.getStatus());
+            stmt.setInt(10, match.getHomeScore());
+            stmt.setInt(11, match.getAwayScore());
 
             int affectedRows = stmt.executeUpdate();
 
@@ -244,7 +268,7 @@ public class MatchDAO {
             stmt.setInt(1, match.getTournamentId());
             stmt.setString(2, match.getHomeTeam());
             stmt.setString(3, match.getAwayTeam());
-            stmt.setDate(4, new java.sql.Date(match.getMatchDate().getTime()));
+            stmt.setTimestamp(4, new java.sql.Timestamp(match.getMatchDate().getTime()));
             stmt.setString(5, match.getLocation());
             stmt.setString(6, match.getCategory());
             stmt.setString(7, match.getType());
@@ -262,10 +286,73 @@ public class MatchDAO {
     }
 
     /**
-     * Deletes a match from the database
-     * @param id The ID of the match to delete
-     * @return true if successful, false otherwise
+     * Retrieves matches created by a specific user (coach)
+     * @param creatorId The creator user ID
+     * @return list of matches created by the user
      */
+    public static ArrayList<Match> doRetriveByCreator(int creatorId) {
+        ArrayList<Match> matches = new ArrayList<>();
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM matches WHERE created_by = ?")) {
+            stmt.setInt(1, creatorId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Match match = new Match();
+                    match.setId(rs.getInt("id"));
+                    match.setTournamentId(rs.getInt("tournament_id"));
+                    int createdBy = rs.getInt("created_by");
+                    match.setCreatedBy(rs.wasNull() ? null : createdBy);
+                    match.setHomeTeam(rs.getString("home_team"));
+                    match.setAwayTeam(rs.getString("away_team"));
+                    Timestamp ts = rs.getTimestamp("match_date");
+                    if (ts != null) match.setMatchDate(new Date(ts.getTime()));
+                    match.setLocation(rs.getString("location"));
+                    match.setCategory(rs.getString("category"));
+                    match.setType(rs.getString("type"));
+                    match.setStatus(rs.getString("status"));
+                    match.setHomeScore(rs.getInt("home_score"));
+                    match.setAwayScore(rs.getInt("away_score"));
+                    matches.add(match);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return matches;
+    }
+
+    public static ArrayList<Match> doRetriveByTeamName(String teamName) {
+        ArrayList<Match> matches = new ArrayList<>();
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM matches WHERE home_team = ? OR away_team = ?")) {
+            stmt.setString(1, teamName);
+            stmt.setString(2, teamName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Match match = new Match();
+                    match.setId(rs.getInt("id"));
+                    match.setTournamentId(rs.getInt("tournament_id"));
+                    int createdBy = rs.getInt("created_by");
+                    match.setCreatedBy(rs.wasNull() ? null : createdBy);
+                    match.setHomeTeam(rs.getString("home_team"));
+                    match.setAwayTeam(rs.getString("away_team"));
+                    Timestamp ts = rs.getTimestamp("match_date");
+                    if (ts != null) match.setMatchDate(new Date(ts.getTime()));
+                    match.setLocation(rs.getString("location"));
+                    match.setCategory(rs.getString("category"));
+                    match.setType(rs.getString("type"));
+                    match.setStatus(rs.getString("status"));
+                    match.setHomeScore(rs.getInt("home_score"));
+                    match.setAwayScore(rs.getInt("away_score"));
+                    matches.add(match);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return matches;
+    }
+
     public static boolean doDelete(int id) {
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("DELETE FROM matches WHERE id = ?")) {

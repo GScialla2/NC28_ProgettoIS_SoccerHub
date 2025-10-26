@@ -1,17 +1,10 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%
-    Object logged = session.getAttribute("user");
-    if (logged != null) {
-        response.sendRedirect(request.getContextPath() + "/home");
-        return;
-    }
-%>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoccerHub - Home</title>
+    <title>SoccerHub - Coach Dashboard</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
@@ -20,58 +13,46 @@
             <h1>SoccerHub</h1>
             <nav>
                 <ul>
-                    <li class="active"><a href="${pageContext.request.contextPath}/">Home</a></li>
+                    <li class="active"><a href="${pageContext.request.contextPath}/home">Home</a></li>
                     <li><a href="${pageContext.request.contextPath}/inizio?action=matches">Partite</a></li>
                     <li><a href="${pageContext.request.contextPath}/inizio?action=tournaments">Tornei</a></li>
-                    <li><a href="${pageContext.request.contextPath}/inizio?action=login">Accedi</a></li>
-                    <li><a href="${pageContext.request.contextPath}/inizio?action=register">Registrati</a></li>
+                    <li><a href="${pageContext.request.contextPath}/login?action=profile">Profilo</a></li>
+                    <li><a href="${pageContext.request.contextPath}/login?action=logout">Logout</a></li>
                 </ul>
             </nav>
         </header>
         
         <main>
-            <section class="hero">
-                <div class="hero-content">
-                    <h2>Benvenuto su SoccerHub</h2>
-                    <p>La piattaforma per gestire e seguire partite e tornei di calcio</p>
-                    <div class="hero-buttons">
-                        <a href="${pageContext.request.contextPath}/inizio?action=login" class="btn btn-primary">Accedi</a>
-                        <a href="${pageContext.request.contextPath}/inizio?action=register" class="btn">Registrati</a>
-                    </div>
-                </div>
+            <section class="welcome-section">
+                <h2>Benvenuto, ${user.name}!</h2>
+                <p>Questa è la tua dashboard da allenatore. Da qui puoi gestire le tue squadre, partite e tornei.</p>
             </section>
             
-            <section class="features">
-                <h2>Cosa puoi fare su SoccerHub</h2>
-                <div class="feature-cards">
-                    <div class="feature-card">
-                        <h3>Per Allenatori</h3>
-                        <p>Gestisci le tue squadre, organizza partite e tornei, monitora le prestazioni dei giocatori.</p>
-                        <a href="${pageContext.request.contextPath}/inizio?action=register" class="btn">Registrati come Allenatore</a>
+            <section class="coach-stats">
+                <h2>Le tue statistiche</h2>
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <h3>Esperienza</h3>
+                        <p>${user.experienceYears} anni</p>
                     </div>
-                    <div class="feature-card">
-                        <h3>Per Giocatori</h3>
-                        <p>Partecipa a partite e tornei, tieni traccia delle tue statistiche, connettiti con altri giocatori.</p>
-                        <a href="${pageContext.request.contextPath}/inizio?action=register" class="btn">Registrati come Giocatore</a>
+                    <div class="stat-card">
+                        <h3>Specializzazione</h3>
+                        <p>${user.specialization}</p>
                     </div>
-                    <div class="feature-card">
-                        <h3>Per Tifosi</h3>
-                        <p>Segui le tue squadre preferite, resta aggiornato su partite e tornei, connettiti con altri tifosi.</p>
-                        <a href="${pageContext.request.contextPath}/inizio?action=register" class="btn">Registrati come Tifoso</a>
+                    <div class="stat-card">
+                        <h3>Licenza</h3>
+                        <p>${user.licenseNumber}</p>
                     </div>
                 </div>
             </section>
             
             <section class="upcoming-matches">
                 <h2>Prossime Partite</h2>
-                <p class="section-description">Scopri le partite in programma e non perdere nemmeno un match!</p>
                 <div class="matches-preview">
-                    <%
-                        java.util.ArrayList<Model.Match> matches = Model.MatchDAO.doRetriveAll();
-                    %>
-                    <% if (matches != null && !matches.isEmpty()) { %>
+                    <% if(request.getAttribute("coachMatches") != null && !((java.util.ArrayList)request.getAttribute("coachMatches")).isEmpty()) { %>
+                        <!-- Display matches from the request attribute -->
                         <div class="match-list" style="max-height: 40vh; overflow-y: auto; padding-right: 4px;">
-                            <% for (Model.Match match : matches) { %>
+                            <% for(Model.Match match : (java.util.ArrayList<Model.Match>)request.getAttribute("coachMatches")) { %>
                                 <div class="match-card">
                                     <div class="match-teams">
                                         <span class="home-team"><%= match.getHomeTeam() %></span>
@@ -88,26 +69,22 @@
                     <% } else { %>
                         <p>Nessuna partita disponibile al momento.</p>
                     <% } %>
-                    <a href="${pageContext.request.contextPath}/inizio?action=matches" class="btn">Visualizza tutte le partite</a>
+                    <a href="${pageContext.request.contextPath}/login?action=matches" class="btn">Gestisci le tue partite</a>
                 </div>
             </section>
             
             <section class="tournaments">
                 <h2>Tornei in Corso</h2>
-                <p class="section-description">Esplora i tornei attivi e segui le competizioni più emozionanti!</p>
                 <div class="tournaments-preview">
-                    <%
-                        java.util.ArrayList<Model.Tournament> tournaments = Model.TournamentDAO.doRetriveAll();
-                    %>
-                    <% if (tournaments != null && !tournaments.isEmpty()) { %>
-                        <div class="tournament-list" style="max-height: 40vh; overflow-y: auto; padding-right: 4px;">
-                            <% for (Model.Tournament tournament : tournaments) { %>
+                    <% if(request.getAttribute("coachTournaments") != null && !((java.util.ArrayList)request.getAttribute("coachTournaments")).isEmpty()) { %>
+                        <!-- Display tournaments from the request attribute -->
+                        <div class="tournament-list">
+                            <% for(Model.Tournament tournament : (java.util.ArrayList<Model.Tournament>)request.getAttribute("coachTournaments")) { %>
                                 <div class="tournament-card">
                                     <h3 class="tournament-name"><%= tournament.getName() %></h3>
                                     <div class="tournament-details">
                                         <span class="tournament-dates">
-                                            <%= new java.text.SimpleDateFormat("dd/MM/yyyy").format(tournament.getStartDate()) %>
-                                            -
+                                            <%= new java.text.SimpleDateFormat("dd/MM/yyyy").format(tournament.getStartDate()) %> - 
                                             <%= new java.text.SimpleDateFormat("dd/MM/yyyy").format(tournament.getEndDate()) %>
                                         </span>
                                         <span class="tournament-location"><%= tournament.getLocation() %></span>
@@ -133,7 +110,7 @@
                 <div class="footer-section">
                     <h3>Link Utili</h3>
                     <ul>
-                        <li><a href="${pageContext.request.contextPath}/">Home</a></li>
+                        <li><a href="${pageContext.request.contextPath}/home">Home</a></li>
                         <li><a href="${pageContext.request.contextPath}/inizio?action=matches">Partite</a></li>
                         <li><a href="${pageContext.request.contextPath}/inizio?action=tournaments">Tornei</a></li>
                     </ul>
@@ -141,8 +118,8 @@
                 <div class="footer-section">
                     <h3>Account</h3>
                     <ul>
-                        <li><a href="${pageContext.request.contextPath}/inizio?action=login">Accedi</a></li>
-                        <li><a href="${pageContext.request.contextPath}/inizio?action=register">Registrati</a></li>
+                        <li><a href="${pageContext.request.contextPath}/login?action=profile">Profilo</a></li>
+                        <li><a href="${pageContext.request.contextPath}/login?action=logout">Logout</a></li>
                     </ul>
                 </div>
             </div>

@@ -1,0 +1,24 @@
+# SoccerHub Import Fix Summary
+
+## Issue
+The application was failing to compile with the error:
+"C:\Users\gabry\Università\IS\SoccerHubProgettoIS\Codice\SoccerHub\src\main\java\Controller\UserValidator.java:4:37 java: package java.lang.classfile.attribute does not exist"
+
+## Root Cause
+The UserValidator.java file was importing a package that doesn't exist in the current Java environment:
+```java
+import java.lang.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
+```
+
+This package is part of newer Java versions (Java 21+) and provides APIs for working with Java class file attributes. It's used for low-level class file manipulation and isn't typically needed for regular application development.
+
+## Fix Applied
+Removed the unnecessary import statement from UserValidator.java since it wasn't being used anywhere in the code.
+
+## Verification
+The application now compiles successfully without any errors.
+
+## Additional Notes
+- The import was likely added by mistake or was a leftover from code that was later removed.
+- The UserValidator class only uses standard Java utilities (Pattern, Map, HashMap, Date) for its validation functionality.
+- No replacement import was needed as the functionality wasn't being used.

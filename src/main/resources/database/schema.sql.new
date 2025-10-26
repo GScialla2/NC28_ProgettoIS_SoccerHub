@@ -1,0 +1,113 @@
+-- SoccerHub Database Schema
+
+-- Create database if not exists
+CREATE DATABASE IF NOT EXISTS soccerhub;
+USE soccerhub;
+
+-- Users table (base table for all user types)
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    surname VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,
+    salt VARCHAR(100) NOT NULL,
+    birth_date DATE NOT NULL,
+    nationality VARCHAR(50) NOT NULL,
+    user_type ENUM('user', 'coach', 'player', 'fan') NOT NULL DEFAULT 'user'
+);
+
+-- Coach table (extends users)
+CREATE TABLE IF NOT EXISTS coach (
+    id INT PRIMARY KEY,
+    license_number VARCHAR(50) NOT NULL,
+    experience_years INT NOT NULL,
+    specialization VARCHAR(100),
+    FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Player table (extends users)
+CREATE TABLE IF NOT EXISTS player (
+    id INT PRIMARY KEY,
+    position VARCHAR(50) NOT NULL,
+    height DECIMAL(5,2),
+    weight DECIMAL(5,2),
+    preferred_foot ENUM('left', 'right', 'both') NOT NULL,
+    FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Fan table (extends users)
+CREATE TABLE IF NOT EXISTS fan (
+    id INT PRIMARY KEY,
+    favorite_team VARCHAR(100),
+    membership_level ENUM('basic', 'premium', 'vip') NOT NULL DEFAULT 'basic',
+    FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Tournament table (renamed to match DAO)
+CREATE TABLE IF NOT EXISTS tournaments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    type VARCHAR(50),
+    trophy VARCHAR(100),
+    team_count INT,
+    match_count INT,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    location VARCHAR(100) NOT NULL,
+    description TEXT,
+    category VARCHAR(50) NOT NULL,
+    status ENUM('upcoming', 'ongoing', 'completed') NOT NULL
+);
+
+-- Match table
+CREATE TABLE IF NOT EXISTS matches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tournament_id INT,
+    home_team VARCHAR(100) NOT NULL,
+    away_team VARCHAR(100) NOT NULL,
+    match_date DATETIME NOT NULL,
+    location VARCHAR(100) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    status ENUM('scheduled', 'in_progress', 'completed', 'cancelled') NOT NULL,
+    home_score INT DEFAULT 0,
+    away_score INT DEFAULT 0,
+    FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE SET NULL
+);
+
+-- Sample data insertion with INSERT IGNORE to prevent duplicate entries
+INSERT IGNORE INTO users (name, surname, email, password, salt, birth_date, nationality, user_type) 
+VALUES ('Admin', 'User', 'admin@soccerhub.com', 'YWRtaW4xMjM=', 'c2FsdDEyMzQ1Njc4OTA=', '1990-01-01', 'Italian', 'user');
+
+INSERT IGNORE INTO users (name, surname, email, password, salt, birth_date, nationality, user_type) 
+VALUES ('Carlo', 'Ancelotti', 'carlo@soccerhub.com', 'Y29hY2gxMjM=', 'c2FsdDEyMzQ1Njc4OTE=', '1959-06-10', 'Italian', 'coach');
+INSERT IGNORE INTO coach (id, license_number, experience_years, specialization)
+SELECT id, 'UEFA-PRO-12345', 30, 'Tactical Management' FROM users WHERE email = 'carlo@soccerhub.com';
+
+INSERT IGNORE INTO users (name, surname, email, password, salt, birth_date, nationality, user_type) 
+VALUES ('Cristiano', 'Ronaldo', 'cr7@soccerhub.com', 'cGxheWVyMTIz', 'c2FsdDEyMzQ1Njc4OTI=', '1985-02-05', 'Portuguese', 'player');
+INSERT IGNORE INTO player (id, position, height, weight, preferred_foot)
+SELECT id, 'Forward', 187, 83, 'right' FROM users WHERE email = 'cr7@soccerhub.com';
+
+INSERT IGNORE INTO users (name, surname, email, password, salt, birth_date, nationality, user_type) 
+VALUES ('Mario', 'Rossi', 'fan@soccerhub.com', 'ZmFuMTIz', 'c2FsdDEyMzQ1Njc4OTM=', '1995-05-15', 'Italian', 'fan');
+INSERT IGNORE INTO fan (id, favorite_team, membership_level)
+SELECT id, 'Juventus', 'premium' FROM users WHERE email = 'fan@soccerhub.com';
+
+-- Insert sample tournaments
+INSERT IGNORE INTO tournaments (name, start_date, end_date, location, description, category, status, type, trophy, team_count, match_count)
+VALUES ('Champions League 2025', '2025-09-15', '2026-05-30', 'Europe', 'The premier club competition in European football', 'Professional', 'upcoming', 'Club', 'Champions Trophy', 32, 125);
+
+INSERT IGNORE INTO tournaments (name, start_date, end_date, location, description, category, status, type, trophy, team_count, match_count)
+VALUES ('World Cup 2026', '2026-06-10', '2026-07-15', 'USA/Canada/Mexico', 'The international football tournament', 'International', 'upcoming', 'National', 'World Cup', 32, 64);
+
+-- Insert sample matches
+INSERT IGNORE INTO matches (tournament_id, home_team, away_team, match_date, location, category, type, status)
+VALUES (1, 'Real Madrid', 'Barcelona', '2025-10-15 20:45:00', 'Santiago Bernabeu, Madrid', 'Professional', 'League', 'scheduled');
+
+INSERT IGNORE INTO matches (tournament_id, home_team, away_team, match_date, location, category, type, status)
+VALUES (1, 'Bayern Munich', 'PSG', '2025-10-16 20:45:00', 'Allianz Arena, Munich', 'Professional', 'League', 'scheduled');
+
+INSERT IGNORE INTO matches (tournament_id, home_team, away_team, match_date, location, category, type, status)
+VALUES (NULL, 'Italy', 'Spain', '2025-11-10 20:45:00', 'Stadio Olimpico, Rome', 'International', 'Friendly', 'scheduled');

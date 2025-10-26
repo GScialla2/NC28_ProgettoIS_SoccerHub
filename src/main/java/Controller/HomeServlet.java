@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
-@WebServlet("")
 public class HomeServlet extends HttpServlet
 {
     @Override
@@ -44,8 +43,11 @@ public class HomeServlet extends HttpServlet
             {
                 if (user instanceof Coach)
                 {
-                    request.setAttribute("coachMatches", matches);
-                    request.setAttribute("coachTournaments", tournaments);
+                    // Show only matches and tournaments created by this coach on home
+                    ArrayList<Match> coachOwnMatches = MatchDAO.doRetriveByCreator(user.getId());
+                    ArrayList<Tournament> coachOwnTournaments = TournamentDAO.doRetriveByCreator(user.getId());
+                    request.setAttribute("coachMatches", coachOwnMatches);
+                    request.setAttribute("coachTournaments", coachOwnTournaments);
                     dispatchPath = "/WEB-INF/results/coach/CoachHomePage.jsp";
                 }
                 else if (user instanceof Player)
@@ -62,6 +64,28 @@ public class HomeServlet extends HttpServlet
                     request.setAttribute("favoriteTeam", fan.getFavoriteTeam());
                     request.setAttribute("teamMatches", matches);
                     dispatchPath = "/WEB-INF/results/fan/FanHomePage.jsp";
+                }
+                else
+                {
+                    // Fallback: use session userType to route even if specialized record is missing
+                    String userType = (String) session.getAttribute("userType");
+                    if ("coach".equals(userType)) {
+                        // Show only matches and tournaments created by this coach on home (fallback when specialized object missing)
+                        ArrayList<Match> coachOwnMatches = MatchDAO.doRetriveByCreator(user.getId());
+                        ArrayList<Tournament> coachOwnTournaments = TournamentDAO.doRetriveByCreator(user.getId());
+                        request.setAttribute("coachMatches", coachOwnMatches);
+                        request.setAttribute("coachTournaments", coachOwnTournaments);
+                        dispatchPath = "/WEB-INF/results/coach/CoachHomePage.jsp";
+                    } else if ("player".equals(userType)) {
+                        request.setAttribute("playerMatches", matches);
+                        dispatchPath = "/WEB-INF/results/player/PlayerHomePage.jsp";
+                    } else if ("fan".equals(userType)) {
+                        request.setAttribute("teamMatches", matches);
+                        dispatchPath = "/WEB-INF/results/fan/FanHomePage.jsp";
+                    } else {
+                        // Authenticated base user: show specialized profile home
+                        dispatchPath = "/WEB-INF/results/user/UserHomePage.jsp";
+                    }
                 }
             }
 

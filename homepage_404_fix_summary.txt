@@ -1,0 +1,47 @@
+# SoccerHub Homepage 404 Error Fix Summary
+
+## Issue
+The web application was returning a 404 error when accessing the root URL instead of displaying the homepage. This was happening because the HomeServlet was trying to forward to JSP files that didn't exist.
+
+## Root Causes
+1. **Missing JSP Files**: The HomeServlet was trying to forward to "/WEB-INF/results/HomePage.jsp" and other specialized homepage JSPs (CoachHomePage.jsp, PlayerHomePage.jsp, FanHomePage.jsp) that didn't exist in the project.
+2. **URL Mapping Conflict**: The HomeServlet was annotated with @WebServlet("") to handle root URL requests, but the JSP files it was trying to forward to were missing.
+
+## Changes Made
+
+### 1. Created Missing JSP Files
+Created the following JSP files that were referenced in HomeServlet.java but were missing from the project:
+
+- `/WEB-INF/results/HomePage.jsp`: The main homepage for non-authenticated users
+- `/WEB-INF/results/coach/CoachHomePage.jsp`: Specialized homepage for coaches
+- `/WEB-INF/results/player/PlayerHomePage.jsp`: Specialized homepage for players
+- `/WEB-INF/results/fan/FanHomePage.jsp`: Specialized homepage for fans
+
+### 2. Enhanced JSP Content
+- Added dynamic content to display matches and tournaments from request attributes
+- Created user-specific sections in the specialized homepages
+- Added proper navigation links and styling
+- Ensured proper handling of null or empty data collections
+
+### 3. Fixed JSP Syntax
+- Fixed JSP syntax issues in the PlayerHomePage.jsp and FanHomePage.jsp files
+- Used proper JSP expression syntax for conditional rendering
+- Ensured proper type casting for collections
+
+## Expected Results
+With these changes:
+
+1. When a user accesses the root URL ("/"), the HomeServlet will intercept the request and forward to the appropriate homepage JSP based on the user's authentication status and type.
+2. Non-authenticated users will see the general HomePage.jsp with information about matches and tournaments.
+3. Authenticated users will see their specialized homepage (CoachHomePage.jsp, PlayerHomePage.jsp, or FanHomePage.jsp) with personalized content.
+4. The 404 error should no longer occur when accessing the root URL.
+
+## Verification Steps
+1. Start the application server
+2. Access the root URL (http://localhost:8080/SoccerHub_war_exploded/)
+3. Verify that the homepage is displayed correctly
+4. Log in as different user types (coach, player, fan) and verify that the appropriate specialized homepage is displayed
+
+## Additional Notes
+- The index.jsp file is still configured as the welcome file in web.xml, but the HomeServlet with @WebServlet("") annotation intercepts requests to the root URL before the welcome file is used.
+- If there are still issues with the homepage, check the server logs for any exceptions or errors that might be occurring during the forwarding process.

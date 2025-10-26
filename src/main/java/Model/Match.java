@@ -6,6 +6,7 @@ public class Match
 {
     private int id;
     private int tournamentId;
+    private Integer createdBy; // user id (coach) who created the match, nullable
     private String homeTeam;
     private String awayTeam;
     private Date matchDate;
@@ -24,6 +25,11 @@ public class Match
     public int getTournamentId()
     {
         return tournamentId;
+    }
+
+    public Integer getCreatedBy()
+    {
+        return createdBy;
     }
 
     public String getHomeTeam()
@@ -79,6 +85,11 @@ public class Match
     public void setTournamentId(int tournamentId)
     {
         this.tournamentId = tournamentId;
+    }
+
+    public void setCreatedBy(Integer createdBy)
+    {
+        this.createdBy = createdBy;
     }
 
     public void setHomeTeam(String homeTeam)

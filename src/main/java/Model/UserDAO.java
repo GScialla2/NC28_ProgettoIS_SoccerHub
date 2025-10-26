@@ -3,9 +3,49 @@ package Model;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class UserDAO
 {
+    /**
+     * Returns the user_type for a given email (coach, player, fan, user) or null if not found
+     */
+    public static String getUserTypeByEmail(String email) {
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT user_type FROM users WHERE email = ?")) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("user_type");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Retrieves email and hashed password for all users (admin use only)
+     * Note: returns hashed passwords as stored in DB; plaintext cannot be retrieved.
+     */
+    public static ArrayList<String[]> doRetrieveAllCredentials() {
+        ArrayList<String[]> creds = new ArrayList<>();
+        try (Connection conn = ConnectionManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT email, password FROM users ORDER BY email")) {
+            while (rs.next()) {
+                creds.add(new String[]{rs.getString("email"), rs.getString("password")});
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return creds;
+    }
+
     /**
      * Retrieves all users from the database
      * @return List of all users
@@ -116,16 +156,39 @@ public class UserDAO
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    // Get the user with the salt
-                    User tempUser = new User();
-                    tempUser.setPassword(rs.getString("password"));
-                    tempUser.setSalt(rs.getString("salt"));
-                    
-                    // Verify the password
-                    if (tempUser.verifyPassword(password)) {
+                    String storedHash = rs.getString("password");
+                    String storedSalt = rs.getString("salt");
+
+                    boolean passwordMatches = false;
+
+                    // Primary: SHA-256(salt + password) Base64 as defined in Model.User
+                    if (storedHash != null && storedSalt != null) {
+                        try {
+                            byte[] saltBytes = Base64.getDecoder().decode(storedSalt);
+                            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                            digest.reset();
+                            digest.update(saltBytes);
+                            digest.update(password.getBytes(StandardCharsets.UTF_8));
+                            String hashedInput = Base64.getEncoder().encodeToString(digest.digest());
+                            passwordMatches = storedHash.equals(hashedInput);
+                        } catch (IllegalArgumentException | NoSuchAlgorithmException ex) {
+                            // Fallback checks below may still work
+                            passwordMatches = false;
+                        }
+                    }
+
+                    // Backward-compatibility: check legacy formats from seed data
+                    if (!passwordMatches) {
+                        String base64Plain = Base64.getEncoder().encodeToString(password.getBytes(StandardCharsets.UTF_8));
+                        if (storedHash != null && (storedHash.equals(base64Plain) || storedHash.equals(password))) {
+                            passwordMatches = true;
+                        }
+                    }
+
+                    if (passwordMatches) {
                         int userId = rs.getInt("id");
                         String userType = rs.getString("user_type");
-                        
+
                         // Create the appropriate user type based on the user_type field
                         if ("coach".equals(userType)) {
                             user = getCoachById(userId);
@@ -133,8 +196,10 @@ public class UserDAO
                             user = getPlayerById(userId);
                         } else if ("fan".equals(userType)) {
                             user = getFanById(userId);
-                        } else {
-                            // Default user type
+                        }
+
+                        // Fallback: if specialized record not found, return base user from current row
+                        if (user == null) {
                             user = new User();
                             user.setId(userId);
                             user.setName(rs.getString("name"));
@@ -344,14 +409,15 @@ public class UserDAO
      */
     public static boolean doUpdatePassword(int userId, String newPassword) {
         try (Connection conn = ConnectionManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("UPDATE users SET password = ? WHERE id = ?")) {
+             PreparedStatement stmt = conn.prepareStatement("UPDATE users SET password = ?, salt = ? WHERE id = ?")) {
 
-            // Create a temporary user to hash the password
+            // Create a temporary user to hash the password (generates new salt)
             User tempUser = new User();
             tempUser.setPassword(newPassword);
 
             stmt.setString(1, tempUser.getPassword());
-            stmt.setInt(2, userId);
+            stmt.setString(2, tempUser.getSalt());
+            stmt.setInt(3, userId);
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -378,5 +444,68 @@ public class UserDAO
         }
 
         return false;
+    }
+
+    /**
+     * Updates coach-specific details
+     */
+    public static boolean updateCoachDetails(int id, String licenseNumber, Integer experienceYears, String specialization) {
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement("UPDATE coach SET license_number = ?, experience_years = ?, specialization = ? WHERE id = ?")) {
+            ps.setString(1, licenseNumber);
+            if (experienceYears != null) {
+                ps.setInt(2, experienceYears);
+            } else {
+                ps.setNull(2, Types.INTEGER);
+            }
+            ps.setString(3, specialization);
+            ps.setInt(4, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Updates player-specific details
+     */
+    public static boolean updatePlayerDetails(int id, String position, Double height, Double weight, String preferredFoot) {
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement("UPDATE player SET position = ?, height = ?, weight = ?, preferred_foot = ? WHERE id = ?")) {
+            ps.setString(1, position);
+            if (height != null) {
+                ps.setDouble(2, height);
+            } else {
+                ps.setNull(2, Types.DECIMAL);
+            }
+            if (weight != null) {
+                ps.setDouble(3, weight);
+            } else {
+                ps.setNull(3, Types.DECIMAL);
+            }
+            ps.setString(4, preferredFoot);
+            ps.setInt(5, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Updates fan-specific details
+     */
+    public static boolean updateFanDetails(int id, String favoriteTeam, String membershipLevel) {
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement("UPDATE fan SET favorite_team = ?, membership_level = ? WHERE id = ?")) {
+            ps.setString(1, favoriteTeam);
+            ps.setString(2, membershipLevel);
+            ps.setInt(3, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
