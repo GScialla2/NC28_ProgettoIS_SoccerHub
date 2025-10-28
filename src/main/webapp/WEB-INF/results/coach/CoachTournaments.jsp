@@ -77,7 +77,7 @@
                                     <div class="tournament-actions">
                                         <a href="#" class="btn">Dettagli</a>
                                         <a href="#" class="btn">Gestisci</a>
-                                        <a href="#" class="btn">Partite</a>
+                                        <a href="${pageContext.request.contextPath}/tournaments/matches?tid=<%= tournament.getId() %>" class="btn">Partite</a>
                                     </div>
                                 </div>
                             <% } %>

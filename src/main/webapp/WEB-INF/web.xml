@@ -62,11 +62,51 @@
         <servlet-name>CreateTournamentServlet</servlet-name>
         <servlet-class>Controller.CreateTournamentServlet</servlet-class>
     </servlet>
+
+    <servlet>
+        <servlet-name>MatchDetailsServlet</servlet-name>
+        <servlet-class>Controller.MatchDetailsServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>EditMatchServlet</servlet-name>
+        <servlet-class>Controller.EditMatchServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>TournamentMatchesServlet</servlet-name>
+        <servlet-class>Controller.TournamentMatchesServlet</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>CreateTournamentMatchServlet</servlet-name>
+        <servlet-class>Controller.CreateTournamentMatchServlet</servlet-class>
+    </servlet>
     
     <!-- Servlet Mappings -->
     <servlet-mapping>
         <servlet-name>HomeServlet</servlet-name>
         <url-pattern>/home</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>TournamentMatchesServlet</servlet-name>
+        <url-pattern>/tournaments/matches</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>CreateTournamentMatchServlet</servlet-name>
+        <url-pattern>/tournaments/matches/create</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>MatchDetailsServlet</servlet-name>
+        <url-pattern>/matches/details</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>EditMatchServlet</servlet-name>
+        <url-pattern>/matches/edit</url-pattern>
     </servlet-mapping>
     
     <servlet-mapping>

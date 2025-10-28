@@ -36,8 +36,12 @@
                 
                 <h2>Le mie Partite</h2>
                 <% String status = request.getParameter("status"); if (status != null) { %>
-                    <div class="alert <%= ("created".equals(status) ? "alert-success" : "alert-error") %>">
-                        <%= ("created".equals(status) ? "Partita creata con successo." : ("error".equals(status) ? "Errore durante la creazione della partita." : ("invalid_datetime".equals(status) ? "Data/Ora non valide." : ""))) %>
+                    <div class="alert <%= (("created".equals(status) || "updated".equals(status) || "deleted".equals(status)) ? "alert-success" : "alert-error") %>">
+                        <%= ("created".equals(status) ? "Partita creata con successo." 
+                            : ("updated".equals(status) ? "Partita aggiornata con successo." 
+                            : ("deleted".equals(status) ? "Partita eliminata con successo." 
+                            : ("error".equals(status) ? "Si è verificato un errore." 
+                            : ("invalid_datetime".equals(status) ? "Data/Ora non valide." : ""))))) %>
                     </div>
                 <% } %>
                 
@@ -80,8 +84,8 @@
                                         <td><%= match.getCategory() %></td>
                                         <td><%= match.getStatus() %></td>
                                         <td>
-                                            <a href="#" class="btn btn-small">Dettagli</a>
-                                            <a href="#" class="btn btn-small">Modifica</a>
+                                            <a href="${pageContext.request.contextPath}/matches/details?id=<%= match.getId() %>" class="btn btn-small">Dettagli</a>
+                                            <a href="${pageContext.request.contextPath}/matches/edit?id=<%= match.getId() %>" class="btn btn-small">Modifica</a>
                                         </td>
                                     </tr>
                                 <% } %>

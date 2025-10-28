@@ -6,6 +6,22 @@ import java.util.Date;
 import java.util.List;
 
 public class MatchDAO {
+    // Holds the last SQL error message encountered during DAO operations (best-effort)
+    private static volatile String LAST_ERROR_MESSAGE = null;
+
+    public static String getLastError() {
+        return LAST_ERROR_MESSAGE;
+    }
+
+    private static void clearLastError() {
+        LAST_ERROR_MESSAGE = null;
+    }
+
+    private static void setLastError(SQLException e) {
+        if (e != null) {
+            LAST_ERROR_MESSAGE = "SQLState=" + e.getSQLState() + ", ErrorCode=" + e.getErrorCode() + ", Message=" + e.getMessage();
+        }
+    }
     /**
      * Retrieves all matches from the database
      * @return List of all matches
@@ -213,6 +229,7 @@ public class MatchDAO {
      * @return true if successful, false otherwise
      */
     public static boolean doSave(Match match) {
+        clearLastError();
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
                      "INSERT INTO matches (tournament_id, created_by, home_team, away_team, match_date, location, category, type, status, home_score, away_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -240,15 +257,21 @@ public class MatchDAO {
 
             int affectedRows = stmt.executeUpdate();
 
+            // Consider the operation successful if at least one row was inserted
+            // Try to set the generated id if the driver returns it, but don't fail if it doesn't
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
+                    if (generatedKeys != null && generatedKeys.next()) {
                         match.setId(generatedKeys.getInt(1));
-                        return true;
                     }
+                } catch (SQLException ignore) {
+                    // Some drivers may not support getGeneratedKeys properly; ignore
                 }
+                return true;
             }
         } catch (SQLException e) {
+            setLastError(e);
+            System.err.println("[MatchDAO.doSave] SQL error while inserting match: SQLState=" + e.getSQLState() + ", ErrorCode=" + e.getErrorCode() + ", Message=" + e.getMessage());
             e.printStackTrace();
         }
 
@@ -265,7 +288,12 @@ public class MatchDAO {
              PreparedStatement stmt = conn.prepareStatement(
                      "UPDATE matches SET tournament_id = ?, home_team = ?, away_team = ?, match_date = ?, location = ?, category = ?, type = ?, status = ?, home_score = ?, away_score = ? WHERE id = ?")) {
 
-            stmt.setInt(1, match.getTournamentId());
+            // Ensure NULL is stored when there is no tournament association (<= 0), to respect FK constraints
+            if (match.getTournamentId() > 0) {
+                stmt.setInt(1, match.getTournamentId());
+            } else {
+                stmt.setNull(1, java.sql.Types.INTEGER);
+            }
             stmt.setString(2, match.getHomeTeam());
             stmt.setString(3, match.getAwayTeam());
             stmt.setTimestamp(4, new java.sql.Timestamp(match.getMatchDate().getTime()));
@@ -365,5 +393,41 @@ public class MatchDAO {
         }
 
         return false;
+    }
+
+    /**
+     * Retrieves matches by tournament id
+     * @param tournamentId tournament id
+     * @return list of matches belonging to the tournament
+     */
+    public static ArrayList<Match> doRetriveByTournamentId(int tournamentId) {
+        ArrayList<Match> matches = new ArrayList<>();
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM matches WHERE tournament_id = ?")) {
+            stmt.setInt(1, tournamentId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Match match = new Match();
+                    match.setId(rs.getInt("id"));
+                    match.setTournamentId(rs.getInt("tournament_id"));
+                    int createdBy = rs.getInt("created_by");
+                    match.setCreatedBy(rs.wasNull() ? null : createdBy);
+                    match.setHomeTeam(rs.getString("home_team"));
+                    match.setAwayTeam(rs.getString("away_team"));
+                    Timestamp ts = rs.getTimestamp("match_date");
+                    if (ts != null) match.setMatchDate(new Date(ts.getTime()));
+                    match.setLocation(rs.getString("location"));
+                    match.setCategory(rs.getString("category"));
+                    match.setType(rs.getString("type"));
+                    match.setStatus(rs.getString("status"));
+                    match.setHomeScore(rs.getInt("home_score"));
+                    match.setAwayScore(rs.getInt("away_score"));
+                    matches.add(match);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return matches;
     }
 }

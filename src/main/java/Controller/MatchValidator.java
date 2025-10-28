@@ -8,8 +8,9 @@ public class MatchValidator {
     private static final Pattern DATE_PATTERN = Pattern.compile("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$");
     private static final Pattern TIME_PATTERN = Pattern.compile("^([01]?[0-9]|2[0-3]):[0-5][0-9]$");
     private static final Pattern TYPE_PATTERN = Pattern.compile("^(Amichevole|No Amichevole)$");
-    private static final Pattern STADIUM_PATTERN = Pattern.compile("^[A-Za-z0-9\\s]{3,}$");
-    private static final Pattern OPPONENT_PATTERN = Pattern.compile("^[A-Za-z\\s]{3,}$");
+    // Relaxed patterns to allow common characters in Italian names (accents, apostrophes, hyphens, commas, dots, ampersands, parentheses)
+    private static final Pattern STADIUM_PATTERN = Pattern.compile("^[A-Za-zÀ-ÖØ-öø-ÿ0-9'’\\-\\.,&()\\s]{3,}$");
+    private static final Pattern OPPONENT_PATTERN = Pattern.compile("^[A-Za-zÀ-ÖØ-öø-ÿ0-9'’\\-\\.,&()\\s]{3,}$");
 
     /**
      * Validates match data

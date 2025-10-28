@@ -117,6 +117,20 @@ public class ConnectionManager {
                 stmt.execute("ALTER TABLE tournaments ADD CONSTRAINT fk_tournaments_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL");
             } catch (SQLException ignore) { /* FK might already exist */ }
 
+            // Safety fix: correct FK on matches.tournament_id to reference tournaments(id) (some DBs have 'tournament')
+            try {
+                // Drop wrong FK if present (common name from legacy dumps)
+                stmt.execute("ALTER TABLE matches DROP FOREIGN KEY matches_ibfk_1");
+            } catch (SQLException ignore) { /* FK name might differ or already dropped */ }
+            try {
+                // Ensure column allows NULL to support ON DELETE SET NULL
+                stmt.execute("ALTER TABLE matches MODIFY COLUMN tournament_id INT NULL");
+            } catch (SQLException ignore) { /* Column already nullable or engine limitation */ }
+            try {
+                // Create correct FK with stable name
+                stmt.execute("ALTER TABLE matches ADD CONSTRAINT fk_matches_tournament FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE SET NULL");
+            } catch (SQLException ignore) { /* Correct FK may already exist */ }
+
             // Ensure there are some tournaments to display pre-login.
             try {
                 int cnt = 0;
