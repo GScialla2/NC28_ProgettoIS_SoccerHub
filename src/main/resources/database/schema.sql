@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS coach (
     license_number VARCHAR(50) NOT NULL,
     experience_years INT NOT NULL,
     specialization VARCHAR(100),
+    team_name VARCHAR(100),
     FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS player (
     height DECIMAL(5,2),
     weight DECIMAL(5,2),
     preferred_foot ENUM('left', 'right', 'both') NOT NULL,
+    team_name VARCHAR(100),
     FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -92,8 +94,8 @@ SELECT id, 'UEFA-PRO-12345', 30, 'Tactical Management' FROM users WHERE email = 
 
 INSERT IGNORE INTO users (name, surname, email, password, salt, birth_date, nationality, user_type) 
 VALUES ('Cristiano', 'Ronaldo', 'cr7@soccerhub.com', 'cGxheWVyMTIz', 'c2FsdDEyMzQ1Njc4OTI=', '1985-02-05', 'Portuguese', 'player');
-INSERT IGNORE INTO player (id, position, height, weight, preferred_foot)
-SELECT id, 'Forward', 187, 83, 'right' FROM users WHERE email = 'cr7@soccerhub.com';
+INSERT IGNORE INTO player (id, position, height, weight, preferred_foot, team_name)
+SELECT id, 'Forward', 187, 83, 'right', 'Juventus' FROM users WHERE email = 'cr7@soccerhub.com';
 
 INSERT IGNORE INTO users (name, surname, email, password, salt, birth_date, nationality, user_type) 
 VALUES ('Mario', 'Rossi', 'fan@soccerhub.com', 'ZmFuMTIz', 'c2FsdDEyMzQ1Njc4OTM=', '1995-05-15', 'Italian', 'fan');

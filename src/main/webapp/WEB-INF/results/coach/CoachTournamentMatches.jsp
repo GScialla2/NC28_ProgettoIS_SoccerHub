@@ -1,7 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="Model.Tournament" %>
 <%@ page import="Model.Match" %>
+<%@ page import="Model.Coach" %>
 <%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.List" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <!DOCTYPE html>
 <html>
@@ -102,17 +104,37 @@
             <form action="${pageContext.request.contextPath}/tournaments/matches/create" method="post">
                 <input type="hidden" name="tournamentId" value="<%= t != null ? t.getId() : 0 %>">
                 <div class="form-group">
-                    <label for="homeTeam">Squadra Casa</label>
-                    <input type="text" id="homeTeam" name="homeTeam" value="<%= request.getAttribute("formHomeTeam") != null ? request.getAttribute("formHomeTeam") : "" %>" required>
-                    <% if (request.getAttribute("formErrors") != null && ((java.util.Map)request.getAttribute("formErrors")).get("homeTeam") != null) { %>
-                        <p class="error"><%= ((java.util.Map)request.getAttribute("formErrors")).get("homeTeam") %></p>
+                    <label>La tua squadra</label>
+                    <input type="text" value="<%= ((Coach)session.getAttribute("user")) != null ? ((Coach)session.getAttribute("user")).getTeamName() : "" %>" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Gioca</label>
+                    <div>
+                        <label><input type="radio" name="homeAway" value="home" <%= "home".equalsIgnoreCase((String)request.getAttribute("formHomeAway")) ? "checked" : "" %>> In Casa</label>
+                        <label style="margin-left:12px;"><input type="radio" name="homeAway" value="away" <%= "away".equalsIgnoreCase((String)request.getAttribute("formHomeAway")) ? "checked" : "" %>> In Trasferta</label>
+                    </div>
+                    <% if (request.getAttribute("formErrors") != null && ((java.util.Map)request.getAttribute("formErrors")).get("homeAway") != null) { %>
+                        <p class="error"><%= ((java.util.Map)request.getAttribute("formErrors")).get("homeAway") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
-                    <label for="awayTeam">Squadra Ospite</label>
-                    <input type="text" id="awayTeam" name="awayTeam" value="<%= request.getAttribute("formAwayTeam") != null ? request.getAttribute("formAwayTeam") : "" %>" required>
-                    <% if (request.getAttribute("formErrors") != null && ((java.util.Map)request.getAttribute("formErrors")).get("awayTeam") != null) { %>
-                        <p class="error"><%= ((java.util.Map)request.getAttribute("formErrors")).get("awayTeam") %></p>
+                    <label for="opponent">Avversaria</label>
+                    <% boolean isInternational = (t != null && t.getCategory() != null && t.getCategory().equalsIgnoreCase("International"));
+                       String coachTeam = ((Coach)session.getAttribute("user")) != null ? ((Coach)session.getAttribute("user")).getTeamName() : null;
+                       java.util.List<String> serieA = java.util.Arrays.asList("Inter","Milan","Juventus","Napoli","Atalanta","Lazio","Roma","Fiorentina","Bologna","Torino","Monza","Genoa","Sassuolo","Udinese","Empoli","Lecce","Cagliari","Verona","Parma","Como");
+                    %>
+                    <% if (!isInternational) { %>
+                        <select id="opponent" name="opponent" required>
+                            <option value="">Seleziona una squadra</option>
+                            <% for (String team : serieA) { if (coachTeam != null && team.equalsIgnoreCase(coachTeam)) continue; %>
+                                <option value="<%= team %>" <%= team.equals(request.getAttribute("formOpponent")) ? "selected" : "" %>><%= team %></option>
+                            <% } %>
+                        </select>
+                    <% } else { %>
+                        <input type="text" id="opponent" name="opponent" placeholder="Inserisci il nome della squadra (internazionale)" value="<%= request.getAttribute("formOpponent") != null ? request.getAttribute("formOpponent") : "" %>" required>
+                    <% } %>
+                    <% if (request.getAttribute("formErrors") != null && ((java.util.Map)request.getAttribute("formErrors")).get("opponent") != null) { %>
+                        <p class="error"><%= ((java.util.Map)request.getAttribute("formErrors")).get("opponent") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
@@ -133,11 +155,8 @@
                     <% } %>
                 </div>
                 <div class="form-group">
-                    <label for="category">Categoria</label>
-                    <input type="text" id="category" name="category" value="<%= request.getAttribute("formCategory") != null ? request.getAttribute("formCategory") : "" %>" required>
-                    <% if (request.getAttribute("formErrors") != null && ((java.util.Map)request.getAttribute("formErrors")).get("category") != null) { %>
-                        <p class="error"><%= ((java.util.Map)request.getAttribute("formErrors")).get("category") %></p>
-                    <% } %>
+                    <label>Categoria torneo</label>
+                    <input type="text" value="<%= (t != null && t.getCategory()!=null) ? t.getCategory() : "" %>" readonly>
                 </div>
                 <div class="form-group">
                     <label for="type">Tipologia</label>

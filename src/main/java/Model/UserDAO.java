@@ -228,7 +228,7 @@ public class UserDAO
         
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "SELECT u.*, c.license_number, c.experience_years, c.specialization " +
+                     "SELECT u.*, c.license_number, c.experience_years, c.specialization, c.team_name " +
                      "FROM users u JOIN coach c ON u.id = c.id " +
                      "WHERE u.id = ?")) {
             
@@ -246,6 +246,7 @@ public class UserDAO
                     coach.setLicenseNumber(rs.getString("license_number"));
                     coach.setExperienceYears(rs.getInt("experience_years"));
                     coach.setSpecialization(rs.getString("specialization"));
+                    coach.setTeamName(rs.getString("team_name"));
                 }
             }
         } catch (SQLException e) {
@@ -265,7 +266,7 @@ public class UserDAO
         
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "SELECT u.*, p.position, p.height, p.weight, p.preferred_foot " +
+                     "SELECT u.*, p.position, p.height, p.weight, p.preferred_foot, p.team_name " +
                      "FROM users u JOIN player p ON u.id = p.id " +
                      "WHERE u.id = ?")) {
             
@@ -284,6 +285,7 @@ public class UserDAO
                     player.setHeight(rs.getDouble("height"));
                     player.setWeight(rs.getDouble("weight"));
                     player.setPreferredFoot(rs.getString("preferred_foot"));
+                    player.setTeamName(rs.getString("team_name"));
                 }
             }
         } catch (SQLException e) {
@@ -364,7 +366,68 @@ public class UserDAO
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
-                        user.setId(generatedKeys.getInt(1));
+                        int newUserId = generatedKeys.getInt(1);
+                        user.setId(newUserId);
+
+                        // Insert into role-specific table when applicable
+                        if (user instanceof Player) {
+                            Player p = (Player) user;
+                            try (PreparedStatement ps = conn.prepareStatement(
+                                    "INSERT INTO player (id, position, height, weight, preferred_foot, team_name) VALUES (?, ?, ?, ?, ?, ?)")) {
+                                ps.setInt(1, newUserId);
+                                ps.setString(2, p.getPosition());
+                                if (p.getHeight() > 0) {
+                                    ps.setDouble(3, p.getHeight());
+                                } else {
+                                    ps.setNull(3, Types.DECIMAL);
+                                }
+                                if (p.getWeight() > 0) {
+                                    ps.setDouble(4, p.getWeight());
+                                } else {
+                                    ps.setNull(4, Types.DECIMAL);
+                                }
+                                ps.setString(5, p.getPreferredFoot());
+                                ps.setString(6, p.getTeamName());
+                                ps.executeUpdate();
+                            }
+                        } else if (user instanceof Fan) {
+                            Fan f = (Fan) user;
+                            try (PreparedStatement ps = conn.prepareStatement(
+                                    "INSERT INTO fan (id, favorite_team, membership_level) VALUES (?, ?, ?)")) {
+                                ps.setInt(1, newUserId);
+                                ps.setString(2, f.getFavoriteTeam());
+                                String membership = f.getMembershipLevel();
+                                if (membership == null || membership.trim().isEmpty()) membership = "basic";
+                                ps.setString(3, membership);
+                                ps.executeUpdate();
+                            }
+                        } else if (user instanceof Coach) {
+                            // Minimal insertion into coach table requires not-null fields per schema
+                            // Use placeholders or default minimal values if not provided
+                            Coach c = (Coach) user;
+                            String licenseNumber = (c.getLicenseNumber() != null && !c.getLicenseNumber().isEmpty()) ? c.getLicenseNumber() : "PENDING-LIC-" + newUserId;
+                            int expYears = (c.getExperienceYears() > 0) ? c.getExperienceYears() : 0;
+                            String specialization = (c.getSpecialization() != null) ? c.getSpecialization() : null;
+                            try (PreparedStatement ps = conn.prepareStatement(
+                                    "INSERT INTO coach (id, license_number, experience_years, specialization, team_name) VALUES (?, ?, ?, ?, ?)")) {
+                                ps.setInt(1, newUserId);
+                                ps.setString(2, licenseNumber);
+                                ps.setInt(3, expYears);
+                                if (specialization != null) {
+                                    ps.setString(4, specialization);
+                                } else {
+                                    ps.setNull(4, Types.VARCHAR);
+                                }
+                                String coachTeam = c.getTeamName();
+                                if (coachTeam != null && !coachTeam.trim().isEmpty()) {
+                                    ps.setString(5, coachTeam.trim());
+                                } else {
+                                    ps.setNull(5, Types.VARCHAR);
+                                }
+                                ps.executeUpdate();
+                            }
+                        }
+
                         return true;
                     }
                 }

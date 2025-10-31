@@ -8,6 +8,7 @@ public class Coach extends User
     private String licenseNumber;
     private int experienceYears;
     private String specialization;
+    private String teamName; // Squadra allenata (Serie A)
 
     public String getCity()
     {
@@ -39,6 +40,10 @@ public class Coach extends User
         return specialization;
     }
 
+    public String getTeamName() {
+        return teamName;
+    }
+
     public void setCity(String city)
     {
         this.city = city;
@@ -67,5 +72,9 @@ public class Coach extends User
     public void setSpecialization(String specialization)
     {
         this.specialization = specialization;
+    }
+
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
     }
 }

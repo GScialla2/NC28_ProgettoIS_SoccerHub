@@ -66,7 +66,7 @@
                 <div class="matches-preview">
                     <% if(request.getAttribute("playerMatches") != null && !((java.util.ArrayList)request.getAttribute("playerMatches")).isEmpty()) { %>
                         <!-- Display matches from the request attribute -->
-                        <div class="match-list">
+                        <div class="match-list" style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
                             <% for(Model.Match match : (java.util.ArrayList<Model.Match>)request.getAttribute("playerMatches")) { %>
                                 <div class="match-card">
                                     <div class="match-teams">

@@ -13,8 +13,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
 
-@WebServlet("/RegistrazioneServlet")
 public class RegistrazioneServlet extends HttpServlet
 {
     @Override
@@ -52,6 +53,8 @@ public class RegistrazioneServlet extends HttpServlet
         if (existingUser != null)
         {
             request.setAttribute("error", "Email già registrata");
+            // ripopola lista squadre per il form
+            request.setAttribute("teams", getSerieATeams());
             RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/results/RegisterUser.jsp");
             dispatcher.forward(request, response);
             return;
@@ -99,6 +102,9 @@ public class RegistrazioneServlet extends HttpServlet
                 dispatchPath = "/WEB-INF/results/RegisterFan.jsp";
             }
 
+            // ripopola lista squadre per i form specifici
+            request.setAttribute("teams", getSerieATeams());
+
             RequestDispatcher dispatcher = request.getRequestDispatcher(dispatchPath);
             dispatcher.forward(request, response);
             return;
@@ -118,6 +124,8 @@ public class RegistrazioneServlet extends HttpServlet
             coach.setCity(city);
             coach.setPhone(phone);
             coach.setCareerDescription(request.getParameter("careerDescription"));
+            // Imposta la squadra allenata dal form
+            coach.setTeamName(request.getParameter("coachTeam"));
 
             registrationSuccess = UserDAO.doSave(coach);
         }
@@ -132,7 +140,20 @@ public class RegistrazioneServlet extends HttpServlet
             player.setNationality(nationality);
             player.setCity(city);
             player.setRole(role);
+            // Campi specifici Player
+            player.setPosition(request.getParameter("position"));
+            try {
+                String h = request.getParameter("height");
+                if (h != null && !h.isEmpty()) player.setHeight(Double.parseDouble(h));
+            } catch (NumberFormatException ignored) {}
+            try {
+                String w = request.getParameter("weight");
+                if (w != null && !w.isEmpty()) player.setWeight(Double.parseDouble(w));
+            } catch (NumberFormatException ignored) {}
+            player.setPreferredFoot(request.getParameter("preferredFoot"));
             player.setCareerDescription(request.getParameter("careerDescription"));
+            // Imposta la squadra scelta
+            player.setTeamName(request.getParameter("teamName"));
 
             registrationSuccess = UserDAO.doSave(player);
         }
@@ -188,8 +209,37 @@ public class RegistrazioneServlet extends HttpServlet
                 dispatchPath = "/WEB-INF/results/RegisterFan.jsp";
             }
 
+            // ripopola lista squadre anche in caso di errore generico
+            request.setAttribute("teams", getSerieATeams());
+
             RequestDispatcher dispatcher = request.getRequestDispatcher(dispatchPath);
             dispatcher.forward(request, response);
         }
+    }
+
+    // Lista base delle squadre di Serie A (2025/26) per i form POST-back
+    private List<String> getSerieATeams() {
+        return Arrays.asList(
+                "Inter",
+                "Milan",
+                "Juventus",
+                "Napoli",
+                "Atalanta",
+                "Lazio",
+                "Roma",
+                "Fiorentina",
+                "Bologna",
+                "Torino",
+                "Monza",
+                "Genoa",
+                "Sassuolo",
+                "Udinese",
+                "Empoli",
+                "Lecce",
+                "Cagliari",
+                "Verona",
+                "Parma",
+                "Como"
+        );
     }
 }

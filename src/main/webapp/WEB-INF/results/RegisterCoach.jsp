@@ -124,6 +124,23 @@
                         <span class="error"><%= request.getAttribute("careerDescriptionError") %></span>
                         <% } %>
                     </div>
+
+                    <!-- Selezione Squadra Allenata (obbligatoria) -->
+                    <div class="form-group">
+                        <label for="coachTeam">Squadra Allenata (Serie A)</label>
+                        <select id="coachTeam" name="coachTeam" required>
+                            <option value="">Seleziona una squadra</option>
+                            <% java.util.List teams = (java.util.List) request.getAttribute("teams");
+                               if (teams != null) {
+                                   for (Object t : teams) { %>
+                                       <option value="<%= t.toString() %>"><%= t.toString() %></option>
+                                   <% }
+                               } %>
+                        </select>
+                        <% if(request.getAttribute("coachTeamError") != null) { %>
+                        <span class="error"><%= request.getAttribute("coachTeamError") %></span>
+                        <% } %>
+                    </div>
                     
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Registrati</button>

@@ -53,11 +53,20 @@ public class CreateTournamentMatchServlet extends HttpServlet {
         }
 
         // Read params
-        String homeTeam = safeTrim(request.getParameter("homeTeam"));
-        String awayTeam = safeTrim(request.getParameter("awayTeam"));
+        Coach coach = (Coach) u;
+        String coachTeam = (coach != null) ? coach.getTeamName() : null;
+        if (coachTeam == null || coachTeam.trim().isEmpty()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Imposta la tua squadra nel profilo/registrazione prima di creare una partita.");
+            return;
+        }
+
+        // Derive category from tournament (authoritative)
+        String category = t.getCategory();
+
+        String homeAway = safeTrim(request.getParameter("homeAway")); // "home" | "away"
+        String opponent = safeTrim(request.getParameter("opponent"));
         String dateTime = safeTrim(request.getParameter("matchDateTime")); // yyyy-MM-dd'T'HH:mm
         String location = safeTrim(request.getParameter("location"));
-        String category = safeTrim(request.getParameter("category"));
         String type = safeTrim(request.getParameter("type"));
 
         // Convert to validator formats
@@ -72,24 +81,47 @@ public class CreateTournamentMatchServlet extends HttpServlet {
         }
 
         Map<String, String> errors = new HashMap<>();
-        // Base validation (away team used as opponent in legacy validator)
+
+        // Base validation for date/time/type/location using existing validator (pass opponent as team parameter)
         errors.putAll(MatchValidator.validateMatch(
-                (awayTeam != null ? awayTeam : ""),
+                (opponent != null ? opponent : ""),
                 date,
                 time,
                 type,
                 location
         ));
-        // Required/min length checks
-        if (homeTeam == null || homeTeam.trim().length() < 3) errors.put("homeTeam", "Il nome della squadra di casa deve contenere almeno 3 caratteri.");
-        if (awayTeam == null || awayTeam.trim().length() < 3) errors.put("awayTeam", "Il nome della squadra ospite deve contenere almeno 3 caratteri.");
-        if (category == null || category.trim().isEmpty()) errors.put("category", "La categoria è obbligatoria.");
+
+        // Validate homeAway
+        if (homeAway == null || !("home".equalsIgnoreCase(homeAway) || "away".equalsIgnoreCase(homeAway))) {
+            errors.put("homeAway", "Seleziona se giochi in Casa o in Trasferta.");
+        }
+
+        // Validate opponent based on category
+        boolean isInternational = category != null && category.equalsIgnoreCase("International");
+        if (opponent == null || opponent.trim().isEmpty()) {
+            errors.put("opponent", "L'avversaria è obbligatoria.");
+        } else {
+            opponent = opponent.trim();
+            if (isInternational) {
+                if (opponent.length() > 100) {
+                    errors.put("opponent", "Il nome della squadra non può superare 100 caratteri.");
+                }
+            } else {
+                // Must be a Serie A team and not equal to coachTeam
+                java.util.List<String> serieA = java.util.Arrays.asList(
+                        "Inter","Milan","Juventus","Napoli","Atalanta","Lazio","Roma","Fiorentina","Bologna","Torino","Monza","Genoa","Sassuolo","Udinese","Empoli","Lecce","Cagliari","Verona","Parma","Como"
+                );
+                if (!serieA.contains(opponent)) {
+                    errors.put("opponent", "Seleziona una squadra di Serie A valida.");
+                } else if (opponent.equalsIgnoreCase(coachTeam)) {
+                    errors.put("opponent", "L'avversaria non può essere la tua stessa squadra.");
+                }
+            }
+        }
+
+        // Additional DB length constraints and requireds
         if (location == null || location.trim().isEmpty()) errors.put("stadium", "Il luogo è obbligatorio.");
         if (type == null || type.trim().isEmpty()) errors.put("type", "La tipologia è obbligatoria.");
-
-        // DB length constraints (to prevent SQL errors in STRICT mode)
-        if (homeTeam != null && homeTeam.length() > 100) errors.put("homeTeam", "Il nome squadra di casa non può superare 100 caratteri.");
-        if (awayTeam != null && awayTeam.length() > 100) errors.put("awayTeam", "Il nome squadra ospite non può superare 100 caratteri.");
         if (location != null && location.length() > 100) errors.put("stadium", "Il luogo non può superare 100 caratteri.");
         if (category != null && category.length() > 50) errors.put("category", "La categoria non può superare 50 caratteri.");
         if (type != null && type.length() > 50) errors.put("type", "La tipologia non può superare 50 caratteri.");
@@ -104,11 +136,24 @@ public class CreateTournamentMatchServlet extends HttpServlet {
             }
         }
 
+        // Compute home/away teams if no errors so far
+        String homeTeam = null;
+        String awayTeam = null;
+        if (errors.isEmpty()) {
+            if ("home".equalsIgnoreCase(homeAway)) {
+                homeTeam = coachTeam;
+                awayTeam = opponent;
+            } else {
+                homeTeam = opponent;
+                awayTeam = coachTeam;
+            }
+        }
+
         if (!errors.isEmpty()) {
             // Echo form values and errors, reopen modal, and forward back to the same management page
             request.setAttribute("formErrors", errors);
-            request.setAttribute("formHomeTeam", homeTeam);
-            request.setAttribute("formAwayTeam", awayTeam);
+            request.setAttribute("formHomeAway", homeAway);
+            request.setAttribute("formOpponent", opponent);
             request.setAttribute("formDateTime", dateTime);
             request.setAttribute("formLocation", location);
             request.setAttribute("formCategory", category);

@@ -55,7 +55,24 @@ public class HomeServlet extends HttpServlet
                     // Player-specific data
                     Player player = (Player) user;
                     request.setAttribute("playerRole", player.getRole());
-                    request.setAttribute("playerMatches", matches);
+
+                    ArrayList<Match> playerMatches = new ArrayList<>();
+                    if (player.getTeamName() != null && !player.getTeamName().trim().isEmpty()) {
+                        playerMatches = MatchDAO.doRetriveByTeamName(player.getTeamName());
+                        // Keep only upcoming/scheduled matches
+                        java.util.Date now = new java.util.Date();
+                        java.util.ArrayList<Match> upcoming = new java.util.ArrayList<>();
+                        for (Match m : playerMatches) {
+                            if (m.getMatchDate() != null && m.getMatchDate().after(now)) {
+                                // if status exists, prefer scheduled or in_progress
+                                if (m.getStatus() == null || "scheduled".equalsIgnoreCase(m.getStatus()) || "in_progress".equalsIgnoreCase(m.getStatus())) {
+                                    upcoming.add(m);
+                                }
+                            }
+                        }
+                        playerMatches = upcoming;
+                    }
+                    request.setAttribute("playerMatches", playerMatches);
                     dispatchPath = "/WEB-INF/results/player/PlayerHomePage.jsp";
                 }
                 else if (user instanceof Fan)

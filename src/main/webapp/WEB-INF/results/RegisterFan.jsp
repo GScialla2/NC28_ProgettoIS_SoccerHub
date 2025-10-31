@@ -134,8 +134,16 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="favoriteTeam">Squadra Preferita</label>
-                        <input type="text" id="favoriteTeam" name="favoriteTeam" required>
+                        <label for="favoriteTeam">Squadra Preferita (Serie A)</label>
+                        <select id="favoriteTeam" name="favoriteTeam" required>
+                            <option value="">Seleziona una squadra</option>
+                            <% java.util.List teams = (java.util.List) request.getAttribute("teams");
+                               if (teams != null) {
+                                   for (Object t : teams) { %>
+                                       <option value="<%= t.toString() %>"><%= t.toString() %></option>
+                                   <% }
+                               } %>
+                        </select>
                         <% if(request.getAttribute("favoriteTeamError") != null) { %>
                         <span class="error"><%= request.getAttribute("favoriteTeamError") %></span>
                         <% } %>

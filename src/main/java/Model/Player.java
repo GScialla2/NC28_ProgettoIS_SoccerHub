@@ -9,6 +9,7 @@ public class Player extends User
     private double height;
     private double weight;
     private String preferredFoot;
+    private String teamName; // The team this player belongs to
 
     public String getCity()
     {
@@ -45,6 +46,11 @@ public class Player extends User
         return preferredFoot;
     }
 
+    public String getTeamName()
+    {
+        return teamName;
+    }
+
     public void setCity(String city)
     {
         this.city = city;
@@ -78,5 +84,10 @@ public class Player extends User
     public void setPreferredFoot(String preferredFoot)
     {
         this.preferredFoot = preferredFoot;
+    }
+
+    public void setTeamName(String teamName)
+    {
+        this.teamName = teamName;
     }
 }
