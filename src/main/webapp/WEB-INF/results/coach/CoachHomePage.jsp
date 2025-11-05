@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Coach Dashboard</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251106-6">
 </head>
 <body>
     <div class="container">
@@ -23,25 +23,41 @@
         </header>
         
         <main>
-            <section class="welcome-section">
+            <section class="welcome-section section-card">
                 <h2>Benvenuto, ${user.name}!</h2>
                 <p>Questa è la tua dashboard da allenatore. Da qui puoi gestire le tue squadre, partite e tornei.</p>
             </section>
-            
-            <section class="coach-stats">
-                <h2>Le tue statistiche</h2>
-                <div class="stats-container">
-                    <div class="stat-card">
-                        <h3>Esperienza</h3>
-                        <p>${user.experienceYears} anni</p>
+
+            <%-- KPI in box --%>
+            <section class="section-card" aria-label="Statistiche allenatore">
+                <div class="stat-grid">
+                    <%
+                        java.util.ArrayList<Model.Match> kpiCoachMatches = (java.util.ArrayList<Model.Match>) request.getAttribute("coachMatches");
+                        java.util.ArrayList<Model.Tournament> kpiCoachTournaments = (java.util.ArrayList<Model.Tournament>) request.getAttribute("coachTournaments");
+                        int totalMatches = (kpiCoachMatches != null) ? kpiCoachMatches.size() : 0;
+                        int totalTournaments = (kpiCoachTournaments != null) ? kpiCoachTournaments.size() : 0;
+                        int upcoming = 0; java.util.Date now = new java.util.Date();
+                        if (kpiCoachMatches != null) {
+                            for (Model.Match m : kpiCoachMatches) {
+                                if (m.getMatchDate() != null && m.getMatchDate().after(now)) upcoming++;
+                            }
+                        }
+                    %>
+                    <div class="stat-box">
+                        <span class="kpi">Prossime partite</span>
+                        <span class="value"><%= upcoming %></span>
                     </div>
-                    <div class="stat-card">
-                        <h3>Specializzazione</h3>
-                        <p>${user.specialization}</p>
+                    <div class="stat-box">
+                        <span class="kpi">Partite totali</span>
+                        <span class="value"><%= totalMatches %></span>
                     </div>
-                    <div class="stat-card">
-                        <h3>Licenza</h3>
-                        <p>${user.licenseNumber}</p>
+                    <div class="stat-box">
+                        <span class="kpi">Tornei creati</span>
+                        <span class="value"><%= totalTournaments %></span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="kpi">Licenza</span>
+                        <span class="value">${user.licenseNumber}</span>
                     </div>
                 </div>
             </section>
@@ -128,5 +144,6 @@
             </div>
         </footer>
     </div>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>

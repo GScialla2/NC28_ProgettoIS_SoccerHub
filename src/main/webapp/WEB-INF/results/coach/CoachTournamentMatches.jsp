@@ -11,7 +11,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestisci Partite del Torneo</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251106-6">
 </head>
 <body>
 <div class="container">
@@ -91,13 +91,13 @@
 </div>
 
 <!-- Modal Crea Partita per Torneo -->
-<div id="createMatchModal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
-    <div class="modal-content" style="background:#fff; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 640px; border-radius: 8px;">
-        <div class="modal-header" style="display:flex; justify-content: space-between; align-items:center;">
-            <h3 style="margin:0;">Aggiungi Partita al Torneo</h3>
+<div id="createMatchModal" class="modal" style="display:none;">
+    <div class="modal-content modal-content--dark">
+        <div class="modal-header">
+            <h3>Aggiungi Partita al Torneo</h3>
             <button id="closeCreateMatchModal" class="btn" type="button">Chiudi</button>
         </div>
-        <div class="modal-body" style="margin-top: 10px;">
+        <div class="modal-body">
             <% if (request.getAttribute("formErrors") != null && ((java.util.Map)request.getAttribute("formErrors")).get("global") != null) { %>
                 <div class="alert alert-error"><%= ((java.util.Map)request.getAttribute("formErrors")).get("global") %></div>
             <% } %>
@@ -118,25 +118,31 @@
                     <% } %>
                 </div>
                 <div class="form-group">
-                    <label for="opponent">Avversaria</label>
-                    <% boolean isInternational = (t != null && t.getCategory() != null && t.getCategory().equalsIgnoreCase("International"));
-                       String coachTeam = ((Coach)session.getAttribute("user")) != null ? ((Coach)session.getAttribute("user")).getTeamName() : null;
+                    <label>Ambito partita</label>
+                    <div>
+                        <label><input type="radio" name="scope" value="national" <%= "international".equalsIgnoreCase((String)request.getAttribute("formScope")) ? "" : "checked" %>> Nazionale</label>
+                        <label style="margin-left:12px;"><input type="radio" name="scope" value="international" <%= "international".equalsIgnoreCase((String)request.getAttribute("formScope")) ? "checked" : "" %>> Internazionale</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="opponentNational">Avversaria (se Nazionale)</label>
+                    <% String coachTeam = ((Coach)session.getAttribute("user")) != null ? ((Coach)session.getAttribute("user")).getTeamName() : null;
                        java.util.List<String> serieA = java.util.Arrays.asList("Inter","Milan","Juventus","Napoli","Atalanta","Lazio","Roma","Fiorentina","Bologna","Torino","Monza","Genoa","Sassuolo","Udinese","Empoli","Lecce","Cagliari","Verona","Parma","Como");
                     %>
-                    <% if (!isInternational) { %>
-                        <select id="opponent" name="opponent" required>
-                            <option value="">Seleziona una squadra</option>
-                            <% for (String team : serieA) { if (coachTeam != null && team.equalsIgnoreCase(coachTeam)) continue; %>
-                                <option value="<%= team %>" <%= team.equals(request.getAttribute("formOpponent")) ? "selected" : "" %>><%= team %></option>
-                            <% } %>
-                        </select>
-                    <% } else { %>
-                        <input type="text" id="opponent" name="opponent" placeholder="Inserisci il nome della squadra (internazionale)" value="<%= request.getAttribute("formOpponent") != null ? request.getAttribute("formOpponent") : "" %>" required>
-                    <% } %>
-                    <% if (request.getAttribute("formErrors") != null && ((java.util.Map)request.getAttribute("formErrors")).get("opponent") != null) { %>
-                        <p class="error"><%= ((java.util.Map)request.getAttribute("formErrors")).get("opponent") %></p>
-                    <% } %>
+                    <select id="opponentNational" name="opponentNational">
+                        <option value="">Seleziona una squadra</option>
+                        <% for (String team : serieA) { if (coachTeam != null && team.equalsIgnoreCase(coachTeam)) continue; %>
+                            <option value="<%= team %>" <%= team.equals(request.getAttribute("formOpponent")) ? "selected" : "" %>><%= team %></option>
+                        <% } %>
+                    </select>
                 </div>
+                <div class="form-group">
+                    <label for="opponentInternational">Avversaria (se Internazionale)</label>
+                    <input type="text" id="opponentInternational" name="opponentInternational" placeholder="Inserisci il nome della squadra (internazionale)" value="<%= request.getAttribute("formOpponent") != null ? request.getAttribute("formOpponent") : "" %>">
+                </div>
+                <% if (request.getAttribute("formErrors") != null && ((java.util.Map)request.getAttribute("formErrors")).get("opponent") != null) { %>
+                    <p class="error"><%= ((java.util.Map)request.getAttribute("formErrors")).get("opponent") %></p>
+                <% } %>
                 <div class="form-group">
                     <label for="matchDateTime">Data e Ora</label>
                     <input type="datetime-local" id="matchDateTime" name="matchDateTime" value="<%= request.getAttribute("formDateTime") != null ? request.getAttribute("formDateTime") : "" %>" required>
@@ -194,7 +200,42 @@
         openModal();
         <% } %>
     })();
+
+    // Toggle national vs international opponent inputs
+    (function(){
+        function updateOpponentInputs(){
+            var scopeIntl = document.querySelector('input[name="scope"][value="international"]');
+            var isIntl = scopeIntl && scopeIntl.checked;
+            var nat = document.getElementById('opponentNational');
+            var intl = document.getElementById('opponentInternational');
+            if (nat && intl){
+                var natGroup = nat.parentElement;
+                var intlGroup = intl.parentElement;
+                if (isIntl){
+                    if (intlGroup) intlGroup.style.display = '';
+                    if (natGroup) natGroup.style.display = 'none';
+                    intl.required = true;
+                    nat.required = false;
+                    nat.value = '';
+                } else {
+                    if (natGroup) natGroup.style.display = '';
+                    if (intlGroup) intlGroup.style.display = 'none';
+                    nat.required = true;
+                    intl.required = false;
+                    intl.value = '';
+                }
+            }
+        }
+        var radios = document.querySelectorAll('input[name="scope"]');
+        radios.forEach(function(r){ r.addEventListener('change', updateOpponentInputs); });
+        // Initialize on load
+        updateOpponentInputs();
+        // Re-init on modal open
+        var openBtn2 = document.getElementById('openCreateMatchBtn');
+        if (openBtn2){ openBtn2.addEventListener('click', function(){ setTimeout(updateOpponentInputs, 0); }); }
+    })();
 </script>
 
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>

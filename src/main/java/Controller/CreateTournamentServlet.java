@@ -130,10 +130,10 @@ public class CreateTournamentServlet extends HttpServlet {
 
         boolean ok = TournamentDAO.doSave(t);
         if (ok) {
-            // Redirect directly to the tournament matches management page so the coach can add matches
-            response.sendRedirect(request.getContextPath() + "/tournaments/matches?tid=" + t.getId() + "&status=created_tournament");
+            // Redirect to tournaments list with toast
+            response.sendRedirect(request.getContextPath() + "/inizio?action=tournaments&status=success&code=tournament_created");
         } else {
-            response.sendRedirect(request.getContextPath() + "/inizio?action=tournaments&status=error");
+            response.sendRedirect(request.getContextPath() + "/inizio?action=tournaments&status=error&code=tournament_create_failed");
         }
     }
 

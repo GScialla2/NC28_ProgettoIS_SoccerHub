@@ -184,9 +184,9 @@ public class EditMatchServlet extends HttpServlet {
 
         boolean ok = MatchDAO.doUpdate(match);
         if (ok) {
-            response.sendRedirect(request.getContextPath() + "/login?action=matches&status=updated");
+            response.sendRedirect(request.getContextPath() + "/matches/details?id=" + id + "&status=success&code=match_updated");
         } else {
-            response.sendRedirect(request.getContextPath() + "/login?action=matches&status=error");
+            response.sendRedirect(request.getContextPath() + "/inizio?action=matches&status=error&code=match_update_failed");
         }
     }
 

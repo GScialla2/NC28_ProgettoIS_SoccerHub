@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Tornei Giocatore</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251104">
 </head>
 <body>
     <div class="container">
@@ -37,23 +37,46 @@
                 <h2>Tornei</h2>
                 
                 <div class="tournaments-actions">
-                    <div class="search-container">
-                        <input type="text" id="searchTournament" placeholder="Cerca torneo...">
-                        <button class="btn btn-search">Cerca</button>
-                    </div>
-                    <div class="filter-container">
-                        <label for="filter">Filtra per:</label>
-                        <select id="filter" name="filter">
-                            <option value="all">Tutti</option>
-                            <option value="upcoming">In Arrivo</option>
-                            <option value="ongoing">In Corso</option>
-                            <option value="completed">Completati</option>
-                            <option value="registered">Iscritto</option>
-                        </select>
-                    </div>
+                    <form class="search-container" method="get" action="${pageContext.request.contextPath}/tournaments/search" style="display:flex; gap:8px; align-items:center;">
+                        <input type="text" id="searchTournament" name="name" placeholder="Cerca torneo..." required>
+                        <button type="submit" class="btn btn-search">Cerca</button>
+                    </form>
                 </div>
                 
-                <div class="tournaments-list">
+                <%-- Sezione risultati ricerca (se presente) --%>
+                <section style="margin-top:12px;">
+                    <% java.util.List<Model.Tournament> searchTournaments = (java.util.List<Model.Tournament>) request.getAttribute("searchTournaments"); %>
+                    <% if (searchTournaments != null) { %>
+                        <h3>Risultati ricerca</h3>
+                        <div class="tournaments-list" style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
+                            <% if (!searchTournaments.isEmpty()) { %>
+                                <div class="tournament-cards">
+                                    <% for (Tournament tournament : searchTournaments) { %>
+                                        <div class="tournament-card">
+                                            <div class="tournament-header">
+                                                <h3><%= tournament.getName() %></h3>
+                                                <span class="tournament-status <%= tournament.getStatus() %>"><%= tournament.getStatus() %></span>
+                                            </div>
+                                            <div class="tournament-info">
+                                                <p><strong>Data Inizio:</strong> <%= dateFormat.format(tournament.getStartDate()) %></p>
+                                                <p><strong>Data Fine:</strong> <%= dateFormat.format(tournament.getEndDate()) %></p>
+                                                <p><strong>Luogo:</strong> <%= tournament.getLocation() %></p>
+                                                <p><strong>Categoria:</strong> <%= tournament.getCategory() %></p>
+                                            </div>
+                                            <div class="tournament-actions">
+                                                <a href="${pageContext.request.contextPath}/tournaments/details?id=<%= tournament.getId() %>" class="btn">Dettagli</a>
+                                            </div>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            <% } else { %>
+                                <p class="no-tournaments">Nessun torneo trovato con il nome inserito.</p>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </section>
+                
+                <div class="tournaments-list" style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
                     <% if (tournaments != null && !tournaments.isEmpty()) { %>
                         <div class="tournament-cards">
                             <% for (Tournament tournament : tournaments) { %>
@@ -73,9 +96,7 @@
                                         <p><%= tournament.getDescription() %></p>
                                     </div>
                                     <div class="tournament-actions">
-                                        <a href="#" class="btn">Dettagli</a>
-                                        <a href="#" class="btn">Partite</a>
-                                        <a href="#" class="btn">Iscriviti</a>
+                                        <a href="${pageContext.request.contextPath}/tournaments/details?id=<%= tournament.getId() %>" class="btn">Dettagli</a>
                                     </div>
                                 </div>
                             <% } %>
@@ -83,13 +104,6 @@
                     <% } else { %>
                         <p class="no-tournaments">Non ci sono tornei da visualizzare.</p>
                     <% } %>
-                </div>
-                
-                <div class="player-tournaments">
-                    <h3>I miei Tornei</h3>
-                    <div class="my-tournaments">
-                        <p class="no-tournaments">Non sei iscritto a nessun torneo.</p>
-                    </div>
                 </div>
             </div>
         </main>
@@ -111,5 +125,6 @@
             console.log('Ricerca: ' + searchTerm);
         });
     </script>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>

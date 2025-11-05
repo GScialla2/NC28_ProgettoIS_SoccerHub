@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Fan Dashboard</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251106-6">
 </head>
 <body>
     <div class="container">
@@ -93,12 +93,18 @@
             </section>
             
             <section class="tournaments">
-                <h2>Tornei in Corso</h2>
+                <% String favTeam = (String) request.getAttribute("favoriteTeam"); %>
+                <h2><%= (favTeam != null && !favTeam.trim().isEmpty()) ? ("Tornei con il " + favTeam) : "Tornei della tua squadra" %></h2>
                 <div class="tournaments-preview">
-                    <% if(request.getAttribute("tournaments") != null && !((java.util.ArrayList)request.getAttribute("tournaments")).isEmpty()) { %>
-                        <!-- Display tournaments from the request attribute -->
-                        <div class="tournament-list">
-                            <% for(Model.Tournament tournament : (java.util.ArrayList<Model.Tournament>)request.getAttribute("tournaments")) { %>
+                    <% 
+                        java.util.ArrayList<Model.Tournament> fanTournaments = (java.util.ArrayList<Model.Tournament>) request.getAttribute("fanTournaments");
+                    %>
+                    <% if (favTeam == null || favTeam.trim().isEmpty()) { %>
+                        <p>Non hai ancora selezionato una squadra preferita. Vai al <a href="${pageContext.request.contextPath}/login?action=profile">profilo</a> per impostarla.</p>
+                    <% } else if (fanTournaments != null && !fanTournaments.isEmpty()) { %>
+                        <!-- Tournaments of the fan's favorite team (all statuses) -->
+                        <div class="tournament-list" style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
+                            <% for(Model.Tournament tournament : fanTournaments) { %>
                                 <div class="tournament-card">
                                     <h3 class="tournament-name"><%= tournament.getName() %></h3>
                                     <div class="tournament-details">
@@ -113,9 +119,9 @@
                             <% } %>
                         </div>
                     <% } else { %>
-                        <p>Nessun torneo disponibile al momento.</p>
+                        <p>Non ci sono tornei con <strong><%= favTeam %></strong> al momento.</p>
                     <% } %>
-                    <a href="${pageContext.request.contextPath}/inizio?action=tournaments" class="btn">Visualizza tutti i tornei</a>
+                    <a href="${pageContext.request.contextPath}/inizio?action=tournaments" class="btn">Vai alla pagina Tornei</a>
                 </div>
             </section>
         </main>
@@ -147,5 +153,6 @@
             </div>
         </footer>
     </div>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>

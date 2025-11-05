@@ -57,29 +57,50 @@ public class HomeServlet extends HttpServlet
                     request.setAttribute("playerRole", player.getRole());
 
                     ArrayList<Match> playerMatches = new ArrayList<>();
-                    if (player.getTeamName() != null && !player.getTeamName().trim().isEmpty()) {
-                        playerMatches = MatchDAO.doRetriveByTeamName(player.getTeamName());
-                        // Keep only upcoming/scheduled matches
+                    ArrayList<Tournament> playerTournaments = new ArrayList<>();
+                    String playerTeam = (player.getTeamName() != null) ? player.getTeamName().trim() : null;
+                    if (playerTeam != null && !playerTeam.isEmpty()) {
+                        // Matches of player's team (upcoming/scheduled preferred)
+                        playerMatches = MatchDAO.doRetriveByTeamName(playerTeam);
                         java.util.Date now = new java.util.Date();
                         java.util.ArrayList<Match> upcoming = new java.util.ArrayList<>();
                         for (Match m : playerMatches) {
                             if (m.getMatchDate() != null && m.getMatchDate().after(now)) {
-                                // if status exists, prefer scheduled or in_progress
                                 if (m.getStatus() == null || "scheduled".equalsIgnoreCase(m.getStatus()) || "in_progress".equalsIgnoreCase(m.getStatus())) {
                                     upcoming.add(m);
                                 }
                             }
                         }
                         playerMatches = upcoming;
+
+                        // Tournaments that involve player's team
+                        try {
+                            playerTournaments = TournamentDAO.doRetriveByTeamName(playerTeam);
+                        } catch (Exception ignore) {
+                            // If DAO method is unavailable, keep empty list gracefully
+                        }
                     }
                     request.setAttribute("playerMatches", playerMatches);
+                    request.setAttribute("playerTournaments", playerTournaments);
                     dispatchPath = "/WEB-INF/results/player/PlayerHomePage.jsp";
                 }
                 else if (user instanceof Fan)
                 {
                     Fan fan = (Fan) user;
-                    request.setAttribute("favoriteTeam", fan.getFavoriteTeam());
+                    String favTeam = (fan != null) ? fan.getFavoriteTeam() : null;
+                    request.setAttribute("favoriteTeam", favTeam);
+                    // Matches list already loaded above (all). Keep for now.
                     request.setAttribute("teamMatches", matches);
+
+                    // Build tournaments that include the fan's favorite team (all statuses)
+                    java.util.ArrayList<Tournament> fanTournaments = new java.util.ArrayList<>();
+                    if (favTeam != null && !favTeam.trim().isEmpty()) {
+                        try {
+                            fanTournaments = TournamentDAO.doRetriveByTeamName(favTeam.trim());
+                        } catch (Exception ignore) {}
+                    }
+                    request.setAttribute("fanTournaments", fanTournaments);
+
                     dispatchPath = "/WEB-INF/results/fan/FanHomePage.jsp";
                 }
                 else

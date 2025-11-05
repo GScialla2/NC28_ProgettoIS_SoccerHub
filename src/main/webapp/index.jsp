@@ -12,7 +12,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Home</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251106-6">
 </head>
 <body>
     <div class="container">
@@ -35,7 +35,7 @@
                     <h2>Benvenuto su SoccerHub</h2>
                     <p>La piattaforma per gestire e seguire partite e tornei di calcio</p>
                     <div class="hero-buttons">
-                        <a href="${pageContext.request.contextPath}/inizio?action=login" class="btn btn-primary">Accedi</a>
+                        <a href="${pageContext.request.contextPath}/inizio?action=login" class="btn btn-black">Accedi</a>
                         <a href="${pageContext.request.contextPath}/inizio?action=register" class="btn">Registrati</a>
                     </div>
                 </div>
@@ -47,17 +47,17 @@
                     <div class="feature-card">
                         <h3>Per Allenatori</h3>
                         <p>Gestisci le tue squadre, organizza partite e tornei, monitora le prestazioni dei giocatori.</p>
-                        <a href="${pageContext.request.contextPath}/inizio?action=register" class="btn">Registrati come Allenatore</a>
+                        <a href="${pageContext.request.contextPath}/inizio?action=register&type=coach" class="btn" aria-label="Registrati come Allenatore">Registrati come Allenatore</a>
                     </div>
                     <div class="feature-card">
                         <h3>Per Giocatori</h3>
                         <p>Partecipa a partite e tornei, tieni traccia delle tue statistiche, connettiti con altri giocatori.</p>
-                        <a href="${pageContext.request.contextPath}/inizio?action=register" class="btn">Registrati come Giocatore</a>
+                        <a href="${pageContext.request.contextPath}/inizio?action=register&type=player" class="btn" aria-label="Registrati come Giocatore">Registrati come Giocatore</a>
                     </div>
                     <div class="feature-card">
                         <h3>Per Tifosi</h3>
                         <p>Segui le tue squadre preferite, resta aggiornato su partite e tornei, connettiti con altri tifosi.</p>
-                        <a href="${pageContext.request.contextPath}/inizio?action=register" class="btn">Registrati come Tifoso</a>
+                        <a href="${pageContext.request.contextPath}/inizio?action=register&type=fan" class="btn" aria-label="Registrati come Tifoso">Registrati come Tifoso</a>
                     </div>
                 </div>
             </section>
@@ -151,5 +151,6 @@
             </div>
         </footer>
     </div>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>

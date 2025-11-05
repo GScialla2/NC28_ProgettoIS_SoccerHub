@@ -337,10 +337,14 @@ public class UserDAO
      * @return true if successful, false otherwise
      */
     public static boolean doSave(User user) {
-        try (Connection conn = ConnectionManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     "INSERT INTO users (name, surname, email, password, salt, birth_date, nationality, user_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                     Statement.RETURN_GENERATED_KEYS)) {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        try {
+            conn = ConnectionManager.getConnection();
+            conn.setAutoCommit(false);
+            stmt = conn.prepareStatement(
+                    "INSERT INTO users (name, surname, email, password, salt, birth_date, nationality, user_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS);
 
             stmt.setString(1, user.getName());
             stmt.setString(2, user.getSurname());
@@ -428,12 +432,26 @@ public class UserDAO
                             }
                         }
 
+                        conn.commit();
                         return true;
                     }
                 }
             }
         } catch (SQLException e) {
+            try {
+                if (conn != null) conn.rollback();
+            } catch (SQLException ignore) {}
             e.printStackTrace();
+        } finally {
+            try {
+                if (conn != null) conn.setAutoCommit(true);
+            } catch (SQLException ignore) {}
+            try {
+                if (stmt != null) stmt.close();
+            } catch (SQLException ignore) {}
+            try {
+                if (conn != null) conn.close();
+            } catch (SQLException ignore) {}
         }
 
         return false;

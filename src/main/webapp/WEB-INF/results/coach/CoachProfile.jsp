@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Profilo Allenatore</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251106-6">
 </head>
 <body>
     <div class="container">
@@ -43,7 +43,21 @@
                         <h3>Informazioni Professionali</h3>
                         <p><strong>Numero Licenza:</strong> <%= coach.getLicenseNumber() %></p>
                         <p><strong>Anni di Esperienza:</strong> <%= coach.getExperienceYears() %></p>
-                        <p><strong>Specializzazione:</strong> <%= coach.getSpecialization() %></p>
+                        <p><strong>Squadra Allenata:</strong> <%= (coach.getTeamName() != null ? coach.getTeamName() : "-") %></p>
+                    </div>
+
+                    <div class="profile-section" style="text-align:center;">
+                        <h3>Scudetto della Squadra</h3>
+                        <%
+                            String team = (coach.getTeamName() != null) ? coach.getTeamName().trim() : null;
+                            String safeTeam = (team != null) ? team.replaceAll("[^A-Za-z0-9]+", "_") : null;
+                            String crestPath = (safeTeam != null && !safeTeam.isEmpty()) ? (request.getContextPath()+"/images/crests/"+safeTeam+".svg") : (request.getContextPath()+"/images/crests/default.svg");
+                            String fallbackCrest = request.getContextPath()+"/images/crests/default.svg";
+                        %>
+                        <div style="display:inline-block; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fff;">
+                            <img src="<%= crestPath %>" alt="Scudetto" style="width:96px; height:96px; object-fit:contain;" onerror="this.onerror=null; this.src='<%= fallbackCrest %>'">
+                            <p style="margin-top:8px;" class="muted"><%= team != null ? team : "Nessuna squadra" %></p>
+                        </div>
                     </div>
                 </div>
                 
@@ -58,5 +72,6 @@
             <p>&copy; 2025 SoccerHub. Tutti i diritti riservati.</p>
         </footer>
     </div>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>

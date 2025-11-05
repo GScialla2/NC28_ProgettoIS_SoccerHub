@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" aria-label="Lazio crest">
+  <defs><linearGradient id="gL" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#87ceeb"/><stop offset="100%" stop-color="#4682b4"/></linearGradient></defs>
+  <path d="M64 8 L116 40 L100 104 L64 120 L28 104 L12 40 Z" fill="url(#gL)" stroke="#ffffff" stroke-width="3"/>
+  <text x="64" y="82" text-anchor="middle" font-family="Segoe UI, Arial" font-size="30" fill="#ffffff" font-weight="700">LAZ</text>
+</svg>

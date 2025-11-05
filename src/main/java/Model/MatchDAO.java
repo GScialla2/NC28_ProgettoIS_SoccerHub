@@ -4,6 +4,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 public class MatchDAO {
     // Holds the last SQL error message encountered during DAO operations (best-effort)
@@ -351,10 +353,66 @@ public class MatchDAO {
 
     public static ArrayList<Match> doRetriveByTeamName(String teamName) {
         ArrayList<Match> matches = new ArrayList<>();
+        if (teamName == null) teamName = "";
+        String trimmed = teamName.trim();
+        String like = "%" + trimmed + "%";
+        String sql = "SELECT * FROM matches " +
+                "WHERE (LOWER(home_team) = LOWER(?) OR LOWER(away_team) = LOWER(?)) " +
+                "   OR (LOWER(home_team) LIKE LOWER(?) OR LOWER(away_team) LIKE LOWER(?)) " +
+                "ORDER BY match_date ASC";
         try (Connection conn = ConnectionManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM matches WHERE home_team = ? OR away_team = ?")) {
-            stmt.setString(1, teamName);
-            stmt.setString(2, teamName);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, trimmed);
+            stmt.setString(2, trimmed);
+            stmt.setString(3, like);
+            stmt.setString(4, like);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Match match = new Match();
+                    match.setId(rs.getInt("id"));
+                    match.setTournamentId(rs.getInt("tournament_id"));
+                    int createdBy = rs.getInt("created_by");
+                    match.setCreatedBy(rs.wasNull() ? null : createdBy);
+                    match.setHomeTeam(rs.getString("home_team"));
+                    match.setAwayTeam(rs.getString("away_team"));
+                    Timestamp ts = rs.getTimestamp("match_date");
+                    if (ts != null) match.setMatchDate(new Date(ts.getTime()));
+                    match.setLocation(rs.getString("location"));
+                    match.setCategory(rs.getString("category"));
+                    match.setType(rs.getString("type"));
+                    match.setStatus(rs.getString("status"));
+                    match.setHomeScore(rs.getInt("home_score"));
+                    match.setAwayScore(rs.getInt("away_score"));
+                    matches.add(match);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return matches;
+    }
+
+    /**
+     * Retrieves matches that involve both provided teams (in any order), case-insensitive and allowing partial matches.
+     */
+    public static ArrayList<Match> doRetriveByBothTeams(String teamA, String teamB) {
+        ArrayList<Match> matches = new ArrayList<>();
+        if (teamA == null) teamA = "";
+        if (teamB == null) teamB = "";
+        String a = teamA.trim();
+        String b = teamB.trim();
+        String aLike = "%" + a + "%";
+        String bLike = "%" + b + "%";
+        String sql = "SELECT * FROM matches " +
+                "WHERE (LOWER(home_team) LIKE LOWER(?) AND LOWER(away_team) LIKE LOWER(?)) " +
+                "   OR (LOWER(home_team) LIKE LOWER(?) AND LOWER(away_team) LIKE LOWER(?)) " +
+                "ORDER BY match_date ASC";
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, aLike);
+            stmt.setString(2, bLike);
+            stmt.setString(3, bLike);
+            stmt.setString(4, aLike);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Match match = new Match();
@@ -429,5 +487,90 @@ public class MatchDAO {
             e.printStackTrace();
         }
         return matches;
+    }
+
+    /**
+     * Retrieves matches followed by a fan
+     */
+    public static ArrayList<Match> doRetriveFollowedByFan(int fanId) {
+        ArrayList<Match> matches = new ArrayList<>();
+        String sql = "SELECT m.* FROM matches m JOIN fan_follow_matches f ON m.id = f.match_id WHERE f.fan_id = ? ORDER BY m.match_date ASC";
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, fanId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Match match = new Match();
+                    match.setId(rs.getInt("id"));
+                    match.setTournamentId(rs.getInt("tournament_id"));
+                    int createdBy = rs.getInt("created_by");
+                    match.setCreatedBy(rs.wasNull() ? null : createdBy);
+                    match.setHomeTeam(rs.getString("home_team"));
+                    match.setAwayTeam(rs.getString("away_team"));
+                    Timestamp ts = rs.getTimestamp("match_date");
+                    if (ts != null) match.setMatchDate(new Date(ts.getTime()));
+                    match.setLocation(rs.getString("location"));
+                    match.setCategory(rs.getString("category"));
+                    match.setType(rs.getString("type"));
+                    match.setStatus(rs.getString("status"));
+                    match.setHomeScore(rs.getInt("home_score"));
+                    match.setAwayScore(rs.getInt("away_score"));
+                    matches.add(match);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return matches;
+    }
+
+    /**
+     * Returns the set of match IDs followed by a fan
+     */
+    public static Set<Integer> getFollowedMatchIds(int fanId) {
+        Set<Integer> ids = new HashSet<>();
+        String sql = "SELECT match_id FROM fan_follow_matches WHERE fan_id = ?";
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, fanId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getInt(1));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ids;
+    }
+
+    /**
+     * Fan starts following a match (idempotent)
+     */
+    public static boolean followMatch(int fanId, int matchId) {
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("INSERT IGNORE INTO fan_follow_matches (fan_id, match_id) VALUES (?, ?)")) {
+            stmt.setInt(1, fanId);
+            stmt.setInt(2, matchId);
+            return stmt.executeUpdate() >= 0; // 1 on insert, 0 if already existed
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Fan stops following a match
+     */
+    public static boolean unfollowMatch(int fanId, int matchId) {
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("DELETE FROM fan_follow_matches WHERE fan_id = ? AND match_id = ?")) {
+            stmt.setInt(1, fanId);
+            stmt.setInt(2, matchId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

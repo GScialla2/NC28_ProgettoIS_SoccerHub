@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Tornei</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251104">
 </head>
 <body>
     <div class="container">
@@ -30,32 +30,80 @@
             <div class="tournaments-container">
                 <% 
                 Fan fan = (Fan) session.getAttribute("user");
-                ArrayList<Tournament> tournaments = (ArrayList<Tournament>) request.getAttribute("tournaments");
+                ArrayList<Tournament> tournaments = (ArrayList<Tournament>) request.getAttribute("tournaments"); // top grid (tutti)
+                java.util.ArrayList<Tournament> allTournaments = (java.util.ArrayList<Tournament>) request.getAttribute("allTournaments");
+                java.util.ArrayList<Tournament> favoriteTournaments = (java.util.ArrayList<Tournament>) request.getAttribute("favoriteTournaments");
+                java.util.ArrayList<Tournament> followedTournaments = (java.util.ArrayList<Tournament>) request.getAttribute("followedTournaments");
+                java.util.Set<Integer> followedTournamentIds = (java.util.Set<Integer>) request.getAttribute("followedTournamentIds");
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+                String status = request.getParameter("status");
                 %>
                 
                 <h2>Tornei</h2>
+
+                <% if (status != null) { %>
+                    <div class="alert <%= ("followed".equals(status) || "unfollowed".equals(status)) ? "alert-success" : "alert-error" %>">
+                        <%= ("followed".equals(status) ? "Torneo aggiunto tra quelli seguiti." : ("unfollowed".equals(status) ? "Hai smesso di seguire il torneo." : "Si è verificato un errore.")) %>
+                    </div>
+                <% } %>
                 
                 <div class="tournaments-actions">
-                    <div class="search-container">
-                        <input type="text" id="searchTournament" placeholder="Cerca torneo...">
-                        <button class="btn btn-search">Cerca</button>
-                    </div>
-                    <div class="filter-container">
-                        <label for="filter">Filtra per:</label>
-                        <select id="filter" name="filter">
-                            <option value="all">Tutti</option>
-                            <option value="upcoming">In Arrivo</option>
-                            <option value="ongoing">In Corso</option>
-                            <option value="completed">Completati</option>
-                        </select>
-                    </div>
+                    <form class="search-container" method="get" action="${pageContext.request.contextPath}/tournaments/search" style="display:flex; gap:8px; align-items:center;">
+                        <input type="text" id="searchTournament" name="name" placeholder="Cerca torneo..." required>
+                        <button type="submit" class="btn btn-search">Cerca</button>
+                    </form>
                 </div>
+
+                <%-- Sezione risultati ricerca (se presente) --%>
+                <section style="margin-top:12px;">
+                    <% java.util.List<Model.Tournament> searchTournaments = (java.util.List<Model.Tournament>) request.getAttribute("searchTournaments"); %>
+                    <% if (searchTournaments != null) { %>
+                        <h3>Risultati ricerca</h3>
+                        <div class="tournaments-list" style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
+                            <% if (!searchTournaments.isEmpty()) { %>
+                                <div class="tournament-cards">
+                                    <% for (Tournament tournament : searchTournaments) { boolean followed = (followedTournamentIds != null && followedTournamentIds.contains(tournament.getId())); %>
+                                        <div class="tournament-card">
+                                            <div class="tournament-header">
+                                                <h3><%= tournament.getName() %></h3>
+                                                <span class="tournament-status <%= tournament.getStatus() %>"><%= tournament.getStatus() %></span>
+                                            </div>
+                                            <div class="tournament-info">
+                                                <p><strong>Data Inizio:</strong> <%= dateFormat.format(tournament.getStartDate()) %></p>
+                                                <p><strong>Data Fine:</strong> <%= dateFormat.format(tournament.getEndDate()) %></p>
+                                                <p><strong>Luogo:</strong> <%= tournament.getLocation() %></p>
+                                                <p><strong>Categoria:</strong> <%= tournament.getCategory() %></p>
+                                            </div>
+                                            <div class="tournament-actions">
+                                                <a href="${pageContext.request.contextPath}/tournaments/details?id=<%= tournament.getId() %>" class="btn">Dettagli</a>
+                                                <% if (followed) { %>
+                                                    <form action="${pageContext.request.contextPath}/tournaments/unfollow" method="post" style="display:inline;">
+                                                        <input type="hidden" name="tournamentId" value="<%= tournament.getId() %>">
+                                                        <button type="submit" class="btn">Non seguire</button>
+                                                    </form>
+                                                <% } else { %>
+                                                    <form action="${pageContext.request.contextPath}/tournaments/follow" method="post" style="display:inline;">
+                                                        <input type="hidden" name="tournamentId" value="<%= tournament.getId() %>">
+                                                        <button type="submit" class="btn">Segui</button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            <% } else { %>
+                                <p class="no-tournaments">Nessun torneo trovato con il nome inserito.</p>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </section>
                 
-                <div class="tournaments-list">
-                    <% if (tournaments != null && !tournaments.isEmpty()) { %>
+                <!-- Sezione: Tutti i Tornei (elenco scrollabile) -->
+                <div class="tournaments-list" style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
+                    <% java.util.List<Tournament> showAll = (allTournaments != null) ? allTournaments : tournaments; %>
+                    <% if (showAll != null && !showAll.isEmpty()) { %>
                         <div class="tournament-cards">
-                            <% for (Tournament tournament : tournaments) { %>
+                            <% for (Tournament tournament : showAll) { boolean followed = (followedTournamentIds != null && followedTournamentIds.contains(tournament.getId())); %>
                                 <div class="tournament-card">
                                     <div class="tournament-header">
                                         <h3><%= tournament.getName() %></h3>
@@ -71,9 +119,18 @@
                                         <p><%= tournament.getDescription() %></p>
                                     </div>
                                     <div class="tournament-actions">
-                                        <a href="#" class="btn">Dettagli</a>
-                                        <a href="#" class="btn">Partite</a>
-                                        <a href="#" class="btn">Segui</a>
+                                        <a href="${pageContext.request.contextPath}/tournaments/matches/view?id=<%= tournament.getId() %>" class="btn">Partite</a>
+                                        <% if (followed) { %>
+                                            <form action="${pageContext.request.contextPath}/tournaments/unfollow" method="post" style="display:inline;">
+                                                <input type="hidden" name="tournamentId" value="<%= tournament.getId() %>">
+                                                <button type="submit" class="btn">Non seguire</button>
+                                            </form>
+                                        <% } else { %>
+                                            <form action="${pageContext.request.contextPath}/tournaments/follow" method="post" style="display:inline;">
+                                                <input type="hidden" name="tournamentId" value="<%= tournament.getId() %>">
+                                                <button type="submit" class="btn">Segui</button>
+                                            </form>
+                                        <% } %>
                                     </div>
                                 </div>
                             <% } %>
@@ -83,21 +140,87 @@
                     <% } %>
                 </div>
                 
-                <% if (fan.getFavoriteTeam() != null && !fan.getFavoriteTeam().isEmpty()) { %>
-                    <div class="favorite-team-tournaments">
-                        <h3>Tornei con <%= fan.getFavoriteTeam() %></h3>
-                        <div class="team-tournaments">
-                            <p class="no-tournaments">Non ci sono tornei con <%= fan.getFavoriteTeam() %>.</p>
-                        </div>
-                    </div>
-                <% } %>
+                <hr style="margin:24px 0;">
                 
-                <div class="followed-tournaments">
-                    <h3>Tornei Seguiti</h3>
-                    <div class="my-tournaments">
-                        <p class="no-tournaments">Non stai seguendo nessun torneo.</p>
+                <!-- Sezione: Tornei che Seguo -->
+                <section>
+                    <h3>Tornei che Seguo</h3>
+                    <div style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
+                        <% if (followedTournaments != null && !followedTournaments.isEmpty()) { %>
+                            <div class="tournament-cards">
+                                <% for (Tournament tournament : followedTournaments) { %>
+                                    <div class="tournament-card">
+                                        <div class="tournament-header">
+                                            <h3><%= tournament.getName() %></h3>
+                                            <span class="tournament-status <%= tournament.getStatus() %>"><%= tournament.getStatus() %></span>
+                                        </div>
+                                        <div class="tournament-info">
+                                            <p><strong>Data Inizio:</strong> <%= dateFormat.format(tournament.getStartDate()) %></p>
+                                            <p><strong>Data Fine:</strong> <%= dateFormat.format(tournament.getEndDate()) %></p>
+                                            <p><strong>Luogo:</strong> <%= tournament.getLocation() %></p>
+                                            <p><strong>Categoria:</strong> <%= tournament.getCategory() %></p>
+                                        </div>
+                                        <div class="tournament-actions">
+                                            <a href="${pageContext.request.contextPath}/tournaments/matches/view?id=<%= tournament.getId() %>" class="btn">Partite</a>
+                                            <form action="${pageContext.request.contextPath}/tournaments/unfollow" method="post" style="display:inline;">
+                                                <input type="hidden" name="tournamentId" value="<%= tournament.getId() %>">
+                                                <button type="submit" class="btn">Non seguire</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% } else { %>
+                            <p class="no-tournaments">Non stai seguendo nessun torneo.</p>
+                        <% } %>
                     </div>
-                </div>
+                </section>
+
+                <!-- Sezione: Tornei con la mia Squadra Preferita -->
+                <section style="margin-top:18px;">
+                    <h3>Tornei con la Mia Squadra Preferita</h3>
+                    <% if (fan != null && fan.getFavoriteTeam() != null && !fan.getFavoriteTeam().trim().isEmpty()) { %>
+                        <p>Squadra: <strong><%= fan.getFavoriteTeam() %></strong></p>
+                        <div style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
+                            <% if (favoriteTournaments != null && !favoriteTournaments.isEmpty()) { %>
+                                <div class="tournament-cards">
+                                    <% for (Tournament tournament : favoriteTournaments) { boolean followed = (followedTournamentIds != null && followedTournamentIds.contains(tournament.getId())); %>
+                                        <div class="tournament-card">
+                                            <div class="tournament-header">
+                                                <h3><%= tournament.getName() %></h3>
+                                                <span class="tournament-status <%= tournament.getStatus() %>"><%= tournament.getStatus() %></span>
+                                            </div>
+                                            <div class="tournament-info">
+                                                <p><strong>Data Inizio:</strong> <%= dateFormat.format(tournament.getStartDate()) %></p>
+                                                <p><strong>Data Fine:</strong> <%= dateFormat.format(tournament.getEndDate()) %></p>
+                                                <p><strong>Luogo:</strong> <%= tournament.getLocation() %></p>
+                                                <p><strong>Categoria:</strong> <%= tournament.getCategory() %></p>
+                                            </div>
+                                            <div class="tournament-actions">
+                                                <a href="${pageContext.request.contextPath}/tournaments/matches/view?id=<%= tournament.getId() %>" class="btn">Partite</a>
+                                                <% if (followed) { %>
+                                                    <form action="${pageContext.request.contextPath}/tournaments/unfollow" method="post" style="display:inline;">
+                                                        <input type="hidden" name="tournamentId" value="<%= tournament.getId() %>">
+                                                        <button type="submit" class="btn">Non seguire</button>
+                                                    </form>
+                                                <% } else { %>
+                                                    <form action="${pageContext.request.contextPath}/tournaments/follow" method="post" style="display:inline;">
+                                                        <input type="hidden" name="tournamentId" value="<%= tournament.getId() %>">
+                                                        <button type="submit" class="btn">Segui</button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            <% } else { %>
+                                <p class="no-tournaments">Non ci sono tornei con <%= fan.getFavoriteTeam() %>.</p>
+                            <% } %>
+                        </div>
+                    <% } else { %>
+                        <p>Non hai ancora selezionato una squadra preferita. Aggiorna la tua preferenza nel profilo.</p>
+                    <% } %>
+                </section>
             </div>
         </main>
         
@@ -106,17 +229,6 @@
         </footer>
     </div>
     
-    <script>
-        document.getElementById('filter').addEventListener('change', function() {
-            // Implementare il filtro dei tornei
-            console.log('Filtro cambiato: ' + this.value);
-        });
-        
-        document.querySelector('.btn-search').addEventListener('click', function() {
-            // Implementare la ricerca dei tornei
-            const searchTerm = document.getElementById('searchTournament').value;
-            console.log('Ricerca: ' + searchTerm);
-        });
-    </script>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>

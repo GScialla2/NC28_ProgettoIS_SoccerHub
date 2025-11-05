@@ -64,7 +64,9 @@ public class CreateTournamentMatchServlet extends HttpServlet {
         String category = t.getCategory();
 
         String homeAway = safeTrim(request.getParameter("homeAway")); // "home" | "away"
-        String opponent = safeTrim(request.getParameter("opponent"));
+        String scope = safeTrim(request.getParameter("scope")); // "national" | "international"
+        String opponentNational = safeTrim(request.getParameter("opponentNational"));
+        String opponentInternational = safeTrim(request.getParameter("opponentInternational"));
         String dateTime = safeTrim(request.getParameter("matchDateTime")); // yyyy-MM-dd'T'HH:mm
         String location = safeTrim(request.getParameter("location"));
         String type = safeTrim(request.getParameter("type"));
@@ -82,6 +84,10 @@ public class CreateTournamentMatchServlet extends HttpServlet {
 
         Map<String, String> errors = new HashMap<>();
 
+        // Resolve scope (default national) and opponent based on scope
+        boolean scopeInternational = "international".equalsIgnoreCase(scope);
+        String opponent = scopeInternational ? opponentInternational : opponentNational;
+
         // Base validation for date/time/type/location using existing validator (pass opponent as team parameter)
         errors.putAll(MatchValidator.validateMatch(
                 (opponent != null ? opponent : ""),
@@ -96,13 +102,17 @@ public class CreateTournamentMatchServlet extends HttpServlet {
             errors.put("homeAway", "Seleziona se giochi in Casa o in Trasferta.");
         }
 
-        // Validate opponent based on category
-        boolean isInternational = category != null && category.equalsIgnoreCase("International");
+        // Validate scope
+        if (scope == null || scope.isEmpty()) {
+            scope = "national";
+        }
+
+        // Validate opponent based on scope
         if (opponent == null || opponent.trim().isEmpty()) {
             errors.put("opponent", "L'avversaria è obbligatoria.");
         } else {
             opponent = opponent.trim();
-            if (isInternational) {
+            if (scopeInternational) {
                 if (opponent.length() > 100) {
                     errors.put("opponent", "Il nome della squadra non può superare 100 caratteri.");
                 }
@@ -111,9 +121,12 @@ public class CreateTournamentMatchServlet extends HttpServlet {
                 java.util.List<String> serieA = java.util.Arrays.asList(
                         "Inter","Milan","Juventus","Napoli","Atalanta","Lazio","Roma","Fiorentina","Bologna","Torino","Monza","Genoa","Sassuolo","Udinese","Empoli","Lecce","Cagliari","Verona","Parma","Como"
                 );
-                if (!serieA.contains(opponent)) {
+                // normalize match
+                boolean validSerieA = false;
+                for (String s : serieA) { if (s.equalsIgnoreCase(opponent)) { validSerieA = true; opponent = s; break; } }
+                if (!validSerieA) {
                     errors.put("opponent", "Seleziona una squadra di Serie A valida.");
-                } else if (opponent.equalsIgnoreCase(coachTeam)) {
+                } else if (coachTeam != null && opponent.equalsIgnoreCase(coachTeam)) {
                     errors.put("opponent", "L'avversaria non può essere la tua stessa squadra.");
                 }
             }
@@ -153,6 +166,7 @@ public class CreateTournamentMatchServlet extends HttpServlet {
             // Echo form values and errors, reopen modal, and forward back to the same management page
             request.setAttribute("formErrors", errors);
             request.setAttribute("formHomeAway", homeAway);
+            request.setAttribute("formScope", scopeInternational ? "international" : "national");
             request.setAttribute("formOpponent", opponent);
             request.setAttribute("formDateTime", dateTime);
             request.setAttribute("formLocation", location);
@@ -184,7 +198,7 @@ public class CreateTournamentMatchServlet extends HttpServlet {
 
         boolean ok = MatchDAO.doSave(match);
         if (ok) {
-            String redirect = request.getContextPath() + "/tournaments/matches?tid=" + tournamentId + "&status=created_match";
+            String redirect = request.getContextPath() + "/tournaments/details?id=" + tournamentId + "&status=success&code=match_added_to_tournament";
             response.sendRedirect(redirect);
         } else {
             // Forward back with a detailed DB error (if available) and reopen modal preserving values

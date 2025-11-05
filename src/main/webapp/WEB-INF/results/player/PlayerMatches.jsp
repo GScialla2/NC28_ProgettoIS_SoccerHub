@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Partite Giocatore</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251106-6">
 </head>
 <body>
     <div class="container">
@@ -27,7 +27,7 @@
         </header>
         
         <main>
-            <div class="matches-container">
+            <div class="matches-container section-card">
                 <% 
                 Player player = (Player) session.getAttribute("user");
                 ArrayList<Match> userMatches = (ArrayList<Match>) request.getAttribute("userMatches");
@@ -37,16 +37,58 @@
                 <h2>Le mie Partite</h2>
                 
                 <div class="matches-actions">
-                    <div class="filter-container">
-                        <label for="filter">Filtra per:</label>
-                        <select id="filter" name="filter">
-                            <option value="all">Tutte</option>
-                            <option value="scheduled">Programmate</option>
-                            <option value="in_progress">In Corso</option>
-                            <option value="completed">Completate</option>
-                        </select>
-                    </div>
+                    <form class="search-container" method="get" action="${pageContext.request.contextPath}/matches/search" style="display:flex; gap:8px; align-items:center;">
+                        <input type="text" id="teamA" name="teamA" placeholder="Squadra 1" required>
+                        <span>vs</span>
+                        <input type="text" id="teamB" name="teamB" placeholder="Squadra 2" required>
+                        <button type="submit" class="btn btn-search">Cerca</button>
+                    </form>
                 </div>
+                
+                <%-- Sezione risultati ricerca (se presente) --%>
+                <section style="margin-top: 12px;">
+                    <% java.util.List<Model.Match> searchResults = (java.util.List<Model.Match>) request.getAttribute("searchResults"); %>
+                    <% if (searchResults != null) { %>
+                        <h3>Risultati ricerca</h3>
+                        <div class="matches-list" style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
+                            <% if (!searchResults.isEmpty()) { %>
+                                <table class="matches-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Squadra Casa</th>
+                                            <th>Squadra Ospite</th>
+                                            <th>Risultato</th>
+                                            <th>Luogo</th>
+                                            <th>Categoria</th>
+                                            <th>Stato</th>
+                                            <th>Azioni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    <% for (Match match : searchResults) { %>
+                                        <tr>
+                                            <td><%= dateFormat.format(match.getMatchDate()) %></td>
+                                            <td><%= match.getHomeTeam() %></td>
+                                            <td><%= match.getAwayTeam() %></td>
+                                            <td><%= match.getHomeScore() %> - <%= match.getAwayScore() %></td>
+                                            <td><%= match.getLocation() %></td>
+                                            <td><%= match.getCategory() %></td>
+                                            <td><%= match.getStatus() %></td>
+                                            <td>
+                                                <a href="${pageContext.request.contextPath}/matches/details?id=<%= match.getId() %>" class="btn btn-small">Dettagli</a>
+                                                <a href="${pageContext.request.contextPath}/matches/stats?id=<%= match.getId() %>" class="btn btn-small">Statistiche</a>
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                    </tbody>
+                                </table>
+                            <% } else { %>
+                                <p class="no-matches">Nessuna partita trovata per la combinazione inserita.</p>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </section>
                 
                 <div class="matches-list">
                     <% if (userMatches != null && !userMatches.isEmpty()) { %>
@@ -74,8 +116,8 @@
                                         <td><%= match.getCategory() %></td>
                                         <td><%= match.getStatus() %></td>
                                         <td>
-                                            <a href="#" class="btn btn-small">Dettagli</a>
-                                            <a href="#" class="btn btn-small">Statistiche</a>
+                                            <a href="${pageContext.request.contextPath}/matches/details?id=<%= match.getId() %>" class="btn btn-small">Dettagli</a>
+                                            <a href="${pageContext.request.contextPath}/matches/stats?id=<%= match.getId() %>" class="btn btn-small">Statistiche</a>
                                         </td>
                                     </tr>
                                 <% } %>
@@ -116,10 +158,8 @@
     </div>
     
     <script>
-        document.getElementById('filter').addEventListener('change', function() {
-            // Implementare il filtro delle partite
-            console.log('Filtro cambiato: ' + this.value);
-        });
+        // Ricerca gestita lato server con MatchesSearchServlet
     </script>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>

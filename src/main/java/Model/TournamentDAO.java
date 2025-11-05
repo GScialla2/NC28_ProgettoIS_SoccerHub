@@ -371,15 +371,36 @@ public class TournamentDAO {
     }
 
     /**
-     * Retrieves tournaments by team name occurrence (in name or description)
+     * Retrieves tournaments related to a given team name.
+     * It matches in three ways (case-insensitive):
+     *  - Tournament name contains the team
+     *  - Tournament description contains the team
+     *  - There exists at least one match in the tournament where the team plays (home or away)
      */
     public static ArrayList<Tournament> doRetriveByTeamName(String teamName) {
         ArrayList<Tournament> tournaments = new ArrayList<>();
+        if (teamName == null) teamName = "";
+        String trimmed = teamName.trim();
+
         try (Connection conn = ConnectionManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM tournaments WHERE name LIKE ? OR description LIKE ?")) {
-            String like = "%" + teamName + "%";
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT DISTINCT t.* " +
+                     "FROM tournaments t " +
+                     "LEFT JOIN matches m ON m.tournament_id = t.id " +
+                     "WHERE " +
+                     "      LOWER(t.name) LIKE LOWER(?) " +
+                     "   OR LOWER(t.description) LIKE LOWER(?) " +
+                     "   OR (m.tournament_id IS NOT NULL AND (LOWER(m.home_team) = LOWER(?) OR LOWER(m.away_team) = LOWER(?) " +
+                     "        OR LOWER(m.home_team) LIKE LOWER(?) OR LOWER(m.away_team) LIKE LOWER(?)))")) {
+
+            String like = "%" + trimmed + "%";
             stmt.setString(1, like);
             stmt.setString(2, like);
+            stmt.setString(3, trimmed);
+            stmt.setString(4, trimmed);
+            stmt.setString(5, like);
+            stmt.setString(6, like);
+
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Tournament t = new Tournament();
@@ -423,5 +444,75 @@ public class TournamentDAO {
         }
 
         return false;
+    }
+
+    /**
+     * Retrieves tournaments by exact name (case-insensitive), returns first match if multiple.
+     */
+    public static Tournament doRetriveByNameExactCI(String name) {
+        if (name == null) return null;
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM tournaments WHERE LOWER(name) = LOWER(?) LIMIT 1")) {
+            stmt.setString(1, name.trim());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Tournament t = new Tournament();
+                    t.setId(rs.getInt("id"));
+                    int createdBy = rs.getInt("created_by");
+                    t.setCreatedBy(rs.wasNull() ? null : createdBy);
+                    t.setName(rs.getString("name"));
+                    t.setType(rs.getString("type"));
+                    t.setTrophy(rs.getString("trophy"));
+                    t.setTeamCount(rs.getInt("team_count"));
+                    t.setMatchCount(rs.getInt("match_count"));
+                    t.setStartDate(rs.getDate("start_date"));
+                    t.setEndDate(rs.getDate("end_date"));
+                    t.setLocation(rs.getString("location"));
+                    t.setDescription(rs.getString("description"));
+                    t.setCategory(rs.getString("category"));
+                    t.setStatus(rs.getString("status"));
+                    return t;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Retrieves tournaments by name LIKE (case-insensitive)
+     */
+    public static ArrayList<Tournament> doRetriveByNameLikeCI(String name) {
+        ArrayList<Tournament> tournaments = new ArrayList<>();
+        if (name == null) name = "";
+        String like = "%" + name.trim() + "%";
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM tournaments WHERE LOWER(name) LIKE LOWER(?)")) {
+            stmt.setString(1, like);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Tournament t = new Tournament();
+                    t.setId(rs.getInt("id"));
+                    int createdBy = rs.getInt("created_by");
+                    t.setCreatedBy(rs.wasNull() ? null : createdBy);
+                    t.setName(rs.getString("name"));
+                    t.setType(rs.getString("type"));
+                    t.setTrophy(rs.getString("trophy"));
+                    t.setTeamCount(rs.getInt("team_count"));
+                    t.setMatchCount(rs.getInt("match_count"));
+                    t.setStartDate(rs.getDate("start_date"));
+                    t.setEndDate(rs.getDate("end_date"));
+                    t.setLocation(rs.getString("location"));
+                    t.setDescription(rs.getString("description"));
+                    t.setCategory(rs.getString("category"));
+                    t.setStatus(rs.getString("status"));
+                    tournaments.add(t);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tournaments;
     }
 }

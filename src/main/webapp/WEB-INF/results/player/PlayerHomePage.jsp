@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Player Dashboard</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251106-6">
 </head>
 <body>
     <div class="container">
@@ -23,29 +23,28 @@
         </header>
         
         <main>
-            <section class="welcome-section">
+            <section class="welcome-section section-card">
                 <h2>Benvenuto, ${user.name}!</h2>
                 <p>Questa è la tua dashboard da giocatore. Da qui puoi visualizzare le tue partite e i tornei a cui partecipi.</p>
             </section>
             
-            <section class="player-stats">
-                <h2>Le tue statistiche</h2>
-                <div class="stats-container">
-                    <div class="stat-card">
-                        <h3>Ruolo</h3>
-                        <p>${user.position}</p>
+            <section class="section-card" aria-label="Statistiche giocatore">
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <span class="kpi">Ruolo</span>
+                        <span class="value">${user.position}</span>
                     </div>
-                    <div class="stat-card">
-                        <h3>Altezza</h3>
-                        <p>${user.height} cm</p>
+                    <div class="stat-box">
+                        <span class="kpi">Altezza</span>
+                        <span class="value">${user.height} cm</span>
                     </div>
-                    <div class="stat-card">
-                        <h3>Peso</h3>
-                        <p>${user.weight} kg</p>
+                    <div class="stat-box">
+                        <span class="kpi">Peso</span>
+                        <span class="value">${user.weight} kg</span>
                     </div>
-                    <div class="stat-card">
-                        <h3>Piede Preferito</h3>
-                        <p>
+                    <div class="stat-box">
+                        <span class="kpi">Piede Preferito</span>
+                        <span class="value">
                             <% 
                             String foot = ((Model.Player)request.getSession().getAttribute("user")).getPreferredFoot();
                             if("left".equals(foot)) { %>
@@ -56,7 +55,7 @@
                                 Entrambi
                             <% } 
                             %>
-                        </p>
+                        </span>
                     </div>
                 </div>
             </section>
@@ -89,12 +88,12 @@
             </section>
             
             <section class="tournaments">
-                <h2>Tornei in Corso</h2>
+                <h2>I miei Tornei</h2>
                 <div class="tournaments-preview">
-                    <% if(request.getAttribute("tournaments") != null && !((java.util.ArrayList)request.getAttribute("tournaments")).isEmpty()) { %>
-                        <!-- Display tournaments from the request attribute -->
-                        <div class="tournament-list">
-                            <% for(Model.Tournament tournament : (java.util.ArrayList<Model.Tournament>)request.getAttribute("tournaments")) { %>
+                    <% if(request.getAttribute("playerTournaments") != null && !((java.util.ArrayList)request.getAttribute("playerTournaments")).isEmpty()) { %>
+                        <!-- Display only tournaments of the player's team -->
+                        <div class="tournament-list" style="max-height: 350px; overflow-y: auto; padding-right: 8px;">
+                            <% for(Model.Tournament tournament : (java.util.ArrayList<Model.Tournament>)request.getAttribute("playerTournaments")) { %>
                                 <div class="tournament-card">
                                     <h3 class="tournament-name"><%= tournament.getName() %></h3>
                                     <div class="tournament-details">
@@ -143,5 +142,6 @@
             </div>
         </footer>
     </div>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>

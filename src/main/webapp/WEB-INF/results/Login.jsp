@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Login</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251106-6">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </head>
 <body>
     <div class="container">
@@ -22,7 +23,7 @@
         </header>
         
         <main>
-            <div class="form-container">
+            <div class="form-container section-card">
                 <h2>Accedi</h2>
                 <form id="loginForm" method="post" action="${pageContext.request.contextPath}/login">
                     <div class="form-group">
@@ -58,13 +59,24 @@
                     data: $(this).serialize(),
                     dataType: "json",
                     success: function(response) {
-                        $("#message").html("<p class='success'>" + response.message + "</p>");
-                        if (response.message.includes("Login")) {
-                            window.location.href = "${pageContext.request.contextPath}/home";
+                        if (response && response.success) {
+                            // Redirect to role-based home; HomeServlet will route to the correct JSP by role
+                            window.location.href = "${pageContext.request.contextPath}/home?status=success&code=login_success";
+                        } else {
+                            var msg = (response && response.message) ? response.message : "Credenziali non valide. Riprova.";
+                            if (window.SoccerHubUI && SoccerHubUI.showToast) {
+                                SoccerHubUI.showToast(msg, 'error');
+                            } else {
+                                $("#message").html("<p class='error'>" + msg + "</p>");
+                            }
                         }
                     },
                     error: function() {
-                        $("#message").html("<p class='error'>Si è verificato un errore durante il login.</p>");
+                        if (window.SoccerHubUI && SoccerHubUI.showToast) {
+                            SoccerHubUI.showToast('Si è verificato un errore durante il login.', 'error');
+                        } else {
+                            $("#message").html("<p class='error'>Si è verificato un errore durante il login.</p>");
+                        }
                     }
                 });
             });

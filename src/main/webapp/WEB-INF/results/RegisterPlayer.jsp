@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Registrazione Giocatore</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251104">
 </head>
 <body>
     <div class="container">
@@ -101,31 +101,16 @@
                     </div>
                     
                     <!-- Player specific fields -->
-                    <div class="form-group">
-                        <label for="city">Città</label>
-                        <input type="text" id="city" name="city" required>
-                        <% if(request.getAttribute("cityError") != null) { %>
-                        <span class="error"><%= request.getAttribute("cityError") %></span>
-                        <% } %>
-                    </div>
                     
                     <div class="form-group">
-                        <label for="role">Ruolo</label>
-                        <select id="role" name="role" required>
-                            <option value="">Seleziona un ruolo</option>
+                        <label for="position">Ruolo</label>
+                        <select id="position" name="position" required>
+                            <option value="">Seleziona il ruolo</option>
                             <option value="Portiere">Portiere</option>
                             <option value="Difensore">Difensore</option>
                             <option value="Centrocampista">Centrocampista</option>
                             <option value="Attaccante">Attaccante</option>
                         </select>
-                        <% if(request.getAttribute("roleError") != null) { %>
-                        <span class="error"><%= request.getAttribute("roleError") %></span>
-                        <% } %>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="position">Posizione</label>
-                        <input type="text" id="position" name="position" required>
                         <% if(request.getAttribute("positionError") != null) { %>
                         <span class="error"><%= request.getAttribute("positionError") %></span>
                         <% } %>
@@ -177,13 +162,6 @@
                         <% } %>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="careerDescription">Descrizione Carriera</label>
-                        <textarea id="careerDescription" name="careerDescription" rows="4"></textarea>
-                        <% if(request.getAttribute("careerDescriptionError") != null) { %>
-                        <span class="error"><%= request.getAttribute("careerDescriptionError") %></span>
-                        <% } %>
-                    </div>
                     
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Registrati</button>
@@ -220,5 +198,6 @@
             </div>
         </footer>
     </div>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>

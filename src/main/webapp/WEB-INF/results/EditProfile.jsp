@@ -15,7 +15,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Modifica Profilo</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251104">
 </head>
 <body>
 <div class="container">
@@ -139,5 +139,6 @@
         <p>&copy; 2025 SoccerHub. Tutti i diritti riservati.</p>
     </footer>
 </div>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>

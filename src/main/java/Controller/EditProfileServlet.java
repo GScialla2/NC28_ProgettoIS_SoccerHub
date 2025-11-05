@@ -107,12 +107,10 @@ public class EditProfileServlet extends HttpServlet {
 
         if (baseOk && specOk) {
             session.setAttribute("user", sessionUser); // refresh
-            request.setAttribute("success", "Profilo aggiornato correttamente.");
-            response.sendRedirect(request.getContextPath() + "/profile");
+            response.sendRedirect(request.getContextPath() + "/profile?status=success&code=profile_updated");
         } else {
-            request.setAttribute("error", "Errore durante l'aggiornamento del profilo.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/results/EditProfile.jsp");
-            dispatcher.forward(request, response);
+            String err = "Errore durante l'aggiornamento del profilo.";
+            response.sendRedirect(request.getContextPath() + "/profile?status=error&code=profile_update_failed&msg=" + java.net.URLEncoder.encode(err, "UTF-8"));
         }
     }
 }

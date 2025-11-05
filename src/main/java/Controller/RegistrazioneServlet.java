@@ -73,8 +73,7 @@ public class RegistrazioneServlet extends HttpServlet
             phone = request.getParameter("phone");
         } else if ("player".equals(userType))
         {
-            city = request.getParameter("city");
-            role = request.getParameter("role");
+            // campi città e ruolo rimossi per i giocatori: mantieni null
         } else if ("fan".equals(userType))
         {
             cittaNascita = request.getParameter("birthCity");
@@ -86,6 +85,24 @@ public class RegistrazioneServlet extends HttpServlet
         Map<String, String> errors = UserValidator.validateRegistration(
                 email, password, confirmPassword, name, surname, city,
                 nationality, role, phone, birthDate, via, cittaResidenza, cittaNascita);
+
+        // Extra validation: ensure team selection for specific roles
+        if ("player".equals(userType)) {
+            String teamName = request.getParameter("teamName");
+            if (teamName == null || teamName.trim().isEmpty()) {
+                errors.put("teamName", "Seleziona la tua squadra.");
+            }
+        } else if ("fan".equals(userType)) {
+            String favoriteTeam = request.getParameter("favoriteTeam");
+            if (favoriteTeam == null || favoriteTeam.trim().isEmpty()) {
+                errors.put("favoriteTeam", "Seleziona la squadra preferita.");
+            }
+        } else if ("coach".equals(userType)) {
+            String coachTeam = request.getParameter("coachTeam");
+            if (coachTeam == null || coachTeam.trim().isEmpty()) {
+                errors.put("coachTeam", "Seleziona la squadra allenata.");
+            }
+        }
 
         if (!errors.isEmpty())
         {
@@ -138,8 +155,6 @@ public class RegistrazioneServlet extends HttpServlet
             player.setSurname(surname);
             player.setBirthDate(birthDate);
             player.setNationality(nationality);
-            player.setCity(city);
-            player.setRole(role);
             // Campi specifici Player
             player.setPosition(request.getParameter("position"));
             try {
@@ -151,7 +166,6 @@ public class RegistrazioneServlet extends HttpServlet
                 if (w != null && !w.isEmpty()) player.setWeight(Double.parseDouble(w));
             } catch (NumberFormatException ignored) {}
             player.setPreferredFoot(request.getParameter("preferredFoot"));
-            player.setCareerDescription(request.getParameter("careerDescription"));
             // Imposta la squadra scelta
             player.setTeamName(request.getParameter("teamName"));
 
@@ -190,8 +204,9 @@ public class RegistrazioneServlet extends HttpServlet
 
         if (registrationSuccess)
         {
-            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/results/Login.jsp");
-            dispatcher.forward(request, response);
+            // Redirect to login with success status so the UI shows a toast
+            response.sendRedirect(request.getContextPath() + "/inizio?action=login&status=success&code=register_success");
+            return;
         }
         else
         {

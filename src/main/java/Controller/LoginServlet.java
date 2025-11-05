@@ -35,11 +35,11 @@ public class LoginServlet extends HttpServlet {
                 if (isAjax) {
                     response.setContentType("application/json");
                     response.setCharacterEncoding("UTF-8");
-                    out.write("{\"message\":\"Email o password errati!\"}");
+                    out.write("{\"success\":false,\"code\":\"login_failed\",\"message\":\"Email o password errati!\"}");
                 } else {
-                    request.setAttribute("loginError", "Email o password errati!");
-                    RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/results/Login.jsp");
-                    dispatcher.forward(request, response);
+                    // Redirect with status params so the UI can show a toast
+                    response.sendRedirect(request.getContextPath() + "/inizio?action=login&status=error&code=login_failed&msg=" + java.net.URLEncoder.encode("Email o password errati!", "UTF-8"));
+                    return;
                 }
             }
             else
@@ -53,9 +53,9 @@ public class LoginServlet extends HttpServlet {
                     if (isAjax) {
                         response.setContentType("application/json");
                         response.setCharacterEncoding("UTF-8");
-                        out.write("{\"message\":\"Login coach effettuato\"}");
+                        out.write("{\"success\":true,\"code\":\"login_success\",\"message\":\"Accesso effettuato (Coach)\"}");
                     } else {
-                        response.sendRedirect(request.getContextPath() + "/home");
+                        response.sendRedirect(request.getContextPath() + "/home?status=success&code=login_success");
                         return;
                     }
                 } else if (user instanceof Player)
@@ -65,9 +65,9 @@ public class LoginServlet extends HttpServlet {
                     if (isAjax) {
                         response.setContentType("application/json");
                         response.setCharacterEncoding("UTF-8");
-                        out.write("{\"message\":\"Login player effettuato\"}");
+                        out.write("{\"success\":true,\"code\":\"login_success\",\"message\":\"Accesso effettuato (Player)\"}");
                     } else {
-                        response.sendRedirect(request.getContextPath() + "/home");
+                        response.sendRedirect(request.getContextPath() + "/home?status=success&code=login_success");
                         return;
                     }
                 } else if (user instanceof Fan)
@@ -77,9 +77,9 @@ public class LoginServlet extends HttpServlet {
                     if (isAjax) {
                         response.setContentType("application/json");
                         response.setCharacterEncoding("UTF-8");
-                        out.write("{\"message\":\"Login fan effettuato\"}");
+                        out.write("{\"success\":true,\"code\":\"login_success\",\"message\":\"Accesso effettuato (Fan)\"}");
                     } else {
-                        response.sendRedirect(request.getContextPath() + "/home");
+                        response.sendRedirect(request.getContextPath() + "/home?status=success&code=login_success");
                         return;
                     }
                 } else
@@ -125,9 +125,9 @@ public class LoginServlet extends HttpServlet {
                     if (isAjax) {
                         response.setContentType("application/json");
                         response.setCharacterEncoding("UTF-8");
-                        out.write("{\"message\":\"Login effettuato\"}");
+                        out.write("{\"success\":true,\"code\":\"login_success\",\"message\":\"Accesso effettuato\"}");
                     } else {
-                        response.sendRedirect(request.getContextPath() + "/home");
+                        response.sendRedirect(request.getContextPath() + "/home?status=success&code=login_success");
                         return;
                     }
                 }
@@ -138,8 +138,8 @@ public class LoginServlet extends HttpServlet {
             if ("logout".equals(action))
             {
                 session.invalidate();
-                RequestDispatcher dispatcher = request.getRequestDispatcher("");
-                dispatcher.forward(request, response);
+                response.sendRedirect(request.getContextPath() + "/home?status=info&code=logout_success");
+                return;
             }
             else if ("profile".equals(action))
             {
@@ -179,13 +179,13 @@ public class LoginServlet extends HttpServlet {
                     {
                         dispatchPath = "/WEB-INF/results/coach/CoachMatches.jsp";
                         userMatches = MatchDAO.doRetriveByCreator(user.getId());
-                        // Fallback for legacy matches without created_by: infer by team name
+                        // Fallback per partite legacy senza created_by: inferisci dal nome squadra
                         if (userMatches == null || userMatches.isEmpty()) {
                             String inferredTeam = null;
                             if (user instanceof Coach) {
                                 Coach c = (Coach) user;
-                                if (c.getSurname() != null && !c.getSurname().trim().isEmpty()) {
-                                    inferredTeam = c.getSurname().trim() + " Team";
+                                if (c.getTeamName() != null && !c.getTeamName().trim().isEmpty()) {
+                                    inferredTeam = c.getTeamName().trim();
                                 }
                             }
                             if (inferredTeam != null) {
@@ -195,25 +195,37 @@ public class LoginServlet extends HttpServlet {
                                 userMatches = new ArrayList<>();
                             }
                         }
+                        request.setAttribute("userMatches", userMatches);
                     } else if (user instanceof Player)
                     {
                         dispatchPath = "/WEB-INF/results/player/PlayerMatches.jsp";
-                        // TODO: when player-team linkage exists, filter by player's team
-                        userMatches = MatchDAO.doRetriveAll();
-                    } else if (user instanceof Fan)
-                    {
-                        dispatchPath = "/WEB-INF/results/fan/FanMatches.jsp";
-                        String fav = ((Fan) user).getFavoriteTeam();
-                        if (fav != null && !fav.trim().isEmpty()) {
-                            userMatches = MatchDAO.doRetriveByTeamName(fav.trim());
+                        // Filter strictly by the player's team (home or away); if not set, show empty list
+                        Player p = (Player) user;
+                        if (p.getTeamName() != null && !p.getTeamName().trim().isEmpty()) {
+                            userMatches = MatchDAO.doRetriveByTeamName(p.getTeamName().trim());
                         } else {
                             userMatches = new ArrayList<>();
                         }
+                        request.setAttribute("userMatches", userMatches);
+                    } else if (user instanceof Fan)
+                    {
+                        dispatchPath = "/WEB-INF/results/fan/FanMatches.jsp";
+                        Fan fan = (Fan) user;
+                        String fav = fan.getFavoriteTeam();
+
+                        ArrayList<Match> allMatches = MatchDAO.doRetriveAll();
+                        ArrayList<Match> favoriteMatches = (fav != null && !fav.trim().isEmpty()) ? MatchDAO.doRetriveByTeamName(fav.trim()) : new ArrayList<>();
+                        ArrayList<Match> followedMatches = MatchDAO.doRetriveFollowedByFan(fan.getId());
+                        java.util.Set<Integer> followedIds = MatchDAO.getFollowedMatchIds(fan.getId());
+
+                        request.setAttribute("allMatches", allMatches);
+                        request.setAttribute("favoriteMatches", favoriteMatches);
+                        request.setAttribute("followedMatches", followedMatches);
+                        request.setAttribute("followedIds", followedIds);
                     } else {
                         userMatches = MatchDAO.doRetriveAll();
+                        request.setAttribute("userMatches", userMatches);
                     }
-
-                    request.setAttribute("userMatches", userMatches);
 
                     RequestDispatcher dispatcher = request.getRequestDispatcher(dispatchPath);
                     dispatcher.forward(request, response);

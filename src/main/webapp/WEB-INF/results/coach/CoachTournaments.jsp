@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Tornei Allenatore</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251106-6">
 </head>
 <body>
     <div class="container">
@@ -75,8 +75,9 @@
                                         <p><%= tournament.getDescription() %></p>
                                     </div>
                                     <div class="tournament-actions">
-                                        <a href="#" class="btn">Dettagli</a>
-                                        <a href="#" class="btn">Gestisci</a>
+                                        <a href="${pageContext.request.contextPath}/tournaments/details?id=<%= tournament.getId() %>" class="btn">Dettagli</a>
+                                        <a href="${pageContext.request.contextPath}/tournaments/edit?id=<%= tournament.getId() %>" class="btn">Modifica</a>
+                                        <a href="${pageContext.request.contextPath}/tournaments/matches?tid=<%= tournament.getId() %>" class="btn">Gestisci</a>
                                         <a href="${pageContext.request.contextPath}/tournaments/matches?tid=<%= tournament.getId() %>" class="btn">Partite</a>
                                     </div>
                                 </div>
@@ -100,12 +101,13 @@
             console.log('Filtro cambiato: ' + this.value);
         });
     </script>
+    <script src="${pageContext.request.contextPath}/js/ui.js?v=20251105"></script>
 </body>
 </html>
 
     <!-- Modal Crea Torneo -->
     <div id="createTournamentModal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
-        <div class="modal-content" style="background:#fff; margin: 3% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 720px; border-radius: 8px;">
+        <div class="modal-content" style="background:#0d0d14; margin: 3% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 720px; border-radius: 8px;">
             <div class="modal-header" style="display:flex; justify-content: space-between; align-items:center; gap: 8px;">
                 <h3 style="margin:0;">Crea Nuovo Torneo</h3>
                 <button id="closeCreateTournamentModal" class="btn" type="button">Chiudi</button>

@@ -67,7 +67,12 @@
         <servlet-name>MatchDetailsServlet</servlet-name>
         <servlet-class>Controller.MatchDetailsServlet</servlet-class>
     </servlet>
-
+    
+    <servlet>
+        <servlet-name>MatchStatsServlet</servlet-name>
+        <servlet-class>Controller.MatchStatsServlet</servlet-class>
+    </servlet>
+    
     <servlet>
         <servlet-name>EditMatchServlet</servlet-name>
         <servlet-class>Controller.EditMatchServlet</servlet-class>
@@ -79,8 +84,23 @@
     </servlet>
 
     <servlet>
+        <servlet-name>TournamentDetailsServlet</servlet-name>
+        <servlet-class>Controller.TournamentDetailsServlet</servlet-class>
+    </servlet>
+
+    <servlet>
         <servlet-name>CreateTournamentMatchServlet</servlet-name>
         <servlet-class>Controller.CreateTournamentMatchServlet</servlet-class>
+    </servlet>
+
+    <!-- Search servlets -->
+    <servlet>
+        <servlet-name>MatchesSearchServlet</servlet-name>
+        <servlet-class>Controller.MatchesSearchServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>TournamentSearchServlet</servlet-name>
+        <servlet-class>Controller.TournamentSearchServlet</servlet-class>
     </servlet>
     
     <!-- Servlet Mappings -->
@@ -94,6 +114,20 @@
         <url-pattern>/tournaments/matches</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>TournamentMatchesViewServlet</servlet-name>
+        <servlet-class>Controller.TournamentMatchesViewServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>TournamentMatchesViewServlet</servlet-name>
+        <url-pattern>/tournaments/matches/view</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>TournamentDetailsServlet</servlet-name>
+        <url-pattern>/tournaments/details</url-pattern>
+    </servlet-mapping>
+
     <servlet-mapping>
         <servlet-name>CreateTournamentMatchServlet</servlet-name>
         <url-pattern>/tournaments/matches/create</url-pattern>
@@ -103,7 +137,12 @@
         <servlet-name>MatchDetailsServlet</servlet-name>
         <url-pattern>/matches/details</url-pattern>
     </servlet-mapping>
-
+    
+    <servlet-mapping>
+        <servlet-name>MatchStatsServlet</servlet-name>
+        <url-pattern>/matches/stats</url-pattern>
+    </servlet-mapping>
+    
     <servlet-mapping>
         <servlet-name>EditMatchServlet</servlet-name>
         <url-pattern>/matches/edit</url-pattern>
@@ -147,6 +186,63 @@
     <servlet-mapping>
         <servlet-name>CreateTournamentServlet</servlet-name>
         <url-pattern>/tournaments/create</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>EditTournamentServlet</servlet-name>
+        <servlet-class>Controller.EditTournamentServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EditTournamentServlet</servlet-name>
+        <url-pattern>/tournaments/edit</url-pattern>
+    </servlet-mapping>
+
+    <!-- Follow/Unfollow matches for Fans -->
+    <servlet>
+        <servlet-name>FollowMatchServlet</servlet-name>
+        <servlet-class>Controller.FollowMatchServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FollowMatchServlet</servlet-name>
+        <url-pattern>/matches/follow</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>UnfollowMatchServlet</servlet-name>
+        <servlet-class>Controller.UnfollowMatchServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>UnfollowMatchServlet</servlet-name>
+        <url-pattern>/matches/unfollow</url-pattern>
+    </servlet-mapping>
+
+    <!-- Follow/Unfollow tournaments for Fans -->
+    <servlet>
+        <servlet-name>FollowTournamentServlet</servlet-name>
+        <servlet-class>Controller.FollowTournamentServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FollowTournamentServlet</servlet-name>
+        <url-pattern>/tournaments/follow</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>UnfollowTournamentServlet</servlet-name>
+        <servlet-class>Controller.UnfollowTournamentServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>UnfollowTournamentServlet</servlet-name>
+        <url-pattern>/tournaments/unfollow</url-pattern>
+    </servlet-mapping>
+
+    <!-- Search servlet mappings -->
+    <servlet-mapping>
+        <servlet-name>MatchesSearchServlet</servlet-name>
+        <url-pattern>/matches/search</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>TournamentSearchServlet</servlet-name>
+        <url-pattern>/tournaments/search</url-pattern>
     </servlet-mapping>
     
     <!-- Listeners -->

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoccerHub - Partite</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20251106-8">
 </head>
 <body>
 <div class="container">
@@ -23,7 +23,7 @@
     </header>
 
     <main>
-        <section class="matches">
+        <section class="matches section-card">
             <h2>Tutte le Partite</h2>
 
             <div class="matches-list">

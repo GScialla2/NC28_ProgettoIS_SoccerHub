@@ -61,36 +61,40 @@ public class InizioServlet extends HttpServlet
                     dispatchPath = "/WEB-INF/results/coach/CoachMatches.jsp";
                     userMatches = MatchDAO.doRetriveByCreator(user.getId());
                     // Fallback for legacy matches without created_by: infer by team name
-                    if (userMatches == null || userMatches.isEmpty()) {
-                        String inferredTeam = null;
-                        Coach c = (Coach) user;
-                        if (c.getSurname() != null && !c.getSurname().trim().isEmpty()) {
-                            inferredTeam = c.getSurname().trim() + " Team";
-                        }
-                        if (inferredTeam != null) {
-                            userMatches = MatchDAO.doRetriveByTeamName(inferredTeam);
-                        }
-                        if (userMatches == null) {
-                            userMatches = new ArrayList<>();
-                        }
+                    if (userMatches == null) {
+                        userMatches = new ArrayList<>();
                     }
+                    request.setAttribute("userMatches", userMatches);
                 } else if (user instanceof Player) {
                     dispatchPath = "/WEB-INF/results/player/PlayerMatches.jsp";
-                    // TODO: when player-team linkage exists, filter by player's team
-                    userMatches = MatchDAO.doRetriveAll();
-                } else if (user instanceof Fan) {
-                    dispatchPath = "/WEB-INF/results/fan/FanMatches.jsp";
-                    String fav = ((Fan) user).getFavoriteTeam();
-                    if (fav != null && !fav.trim().isEmpty()) {
-                        userMatches = MatchDAO.doRetriveByTeamName(fav.trim());
+                    // Show only matches of the player's team when available
+                    Player p = (Player) user;
+                    if (p.getTeamName() != null && !p.getTeamName().trim().isEmpty()) {
+                        userMatches = MatchDAO.doRetriveByTeamName(p.getTeamName().trim());
                     } else {
                         userMatches = new ArrayList<>();
                     }
+                    request.setAttribute("userMatches", userMatches);
+                } else if (user instanceof Fan) {
+                    dispatchPath = "/WEB-INF/results/fan/FanMatches.jsp";
+                    Fan fan = (Fan) user;
+                    String fav = fan.getFavoriteTeam();
+
+                    // Build three lists for Fan page
+                    ArrayList<Match> allMatches = MatchDAO.doRetriveAll();
+                    ArrayList<Match> favoriteMatches = (fav != null && !fav.trim().isEmpty()) ? MatchDAO.doRetriveByTeamName(fav.trim()) : new ArrayList<>();
+                    ArrayList<Match> followedMatches = MatchDAO.doRetriveFollowedByFan(fan.getId());
+                    java.util.Set<Integer> followedIds = MatchDAO.getFollowedMatchIds(fan.getId());
+
+                    request.setAttribute("allMatches", allMatches);
+                    request.setAttribute("favoriteMatches", favoriteMatches);
+                    request.setAttribute("followedMatches", followedMatches);
+                    request.setAttribute("followedIds", followedIds);
                 } else {
                     userMatches = MatchDAO.doRetriveAll();
+                    request.setAttribute("userMatches", userMatches);
                 }
 
-                request.setAttribute("userMatches", userMatches);
                 RequestDispatcher dispatcher = request.getRequestDispatcher(dispatchPath);
                 dispatcher.forward(request, response);
             } else {
@@ -125,16 +129,32 @@ public class InizioServlet extends HttpServlet
                         tournaments = new ArrayList<>();
                     }
                 } else if (user instanceof Player) {
-                    // TODO: when player-team linkage exists, filter by player's team
-                    tournaments = TournamentDAO.doRetriveAll();
-                } else if (user instanceof Fan) {
-                    String fav = ((Fan) user).getFavoriteTeam();
-                    if (fav != null && !fav.trim().isEmpty()) {
-                        tournaments = TournamentDAO.doRetriveByTeamName(fav.trim());
+                    // Player: mostra SOLO i tornei della sua squadra
+                    Player p = (Player) user;
+                    if (p.getTeamName() != null && !p.getTeamName().trim().isEmpty()) {
+                        tournaments = TournamentDAO.doRetriveByTeamName(p.getTeamName().trim());
                     } else {
-                        // If the fan hasn't set a favorite team yet, show all tournaments instead of an empty list
-                        tournaments = TournamentDAO.doRetriveAll();
+                        tournaments = new ArrayList<>();
                     }
+                } else if (user instanceof Fan) {
+                    Fan fanUser = (Fan) user;
+                    String fav = fanUser.getFavoriteTeam();
+                    // Main list: all tournaments for discovery
+                    ArrayList<Tournament> allTournaments = TournamentDAO.doRetriveAll();
+                    // Favorite team tournaments
+                    ArrayList<Tournament> favoriteTournaments = (fav != null && !fav.trim().isEmpty()) ? TournamentDAO.doRetriveByTeamName(fav.trim()) : new ArrayList<>();
+                    // Followed tournaments
+                    ArrayList<Tournament> followedTournaments = Model.TournamentFollowDAO.getFollowedByFan(fanUser.getId());
+                    java.util.Set<Integer> followedTournamentIds = Model.TournamentFollowDAO.getFollowedIds(fanUser.getId());
+
+                    // Choose what to show in the top grid: keep all tournaments for breadth
+                    tournaments = allTournaments;
+
+                    // Expose lists to JSP
+                    request.setAttribute("allTournaments", allTournaments);
+                    request.setAttribute("favoriteTournaments", favoriteTournaments);
+                    request.setAttribute("followedTournaments", followedTournaments);
+                    request.setAttribute("followedTournamentIds", followedTournamentIds);
                 } else {
                     tournaments = TournamentDAO.doRetriveAll();
                 }
